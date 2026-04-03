@@ -1,0 +1,5 @@
+name: Abilities
+version: '1'
+main: org.pat.abilities.Abilities
+api-version: '1.21'
+authors: [ PatriciaChips ]
