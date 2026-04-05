@@ -1,19 +1,35 @@
 package org.pat.abilities.Objects.Abilities;
 
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.pat.abilities.Objects.InterfaceActions;
+import org.pat.abilities.Utils;
 
-public class Test_Ability {
+public interface Test_Ability extends InterfaceActions {
 
-    public static void runPrimary(Player p) {
+    /**
+     * To create a new ability copy this class and edit this methods; DO NOT RENAME THEM
+     * Then you need to create a enum variable
+     */
+
+    @Override
+    default void runPrimary(Player p) {
         p.sendMessage("test primary activated!");
     }
 
-    public static void runSecondary(Player p) {
+    @Override
+    default void runSecondary(Player p) {
         p.sendMessage("test secondary activated!");
     }
 
-    public static void runShiftPassive(Player p) {
+    @Override
+    default void runShiftPassive(Player p) {
         p.sendMessage("test shift passive activated!");
+    }
+
+    @Override
+    default void runPassive(Player p) {
+        p.sendMessage("test passive activated!");
     }
 
 }

@@ -7,6 +7,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.pat.abilities.Abilities;
@@ -54,11 +55,7 @@ public class AbilityLogic implements Listener {
                                      */
 
                                     /***/
-                                    switch (ability) {
-                                        case test:
-                                            Test_Ability.runPrimary(p);
-                                            break;
-                                    }
+                                    ability.runPrimary(p);
                                     /***/
 
                                     primary.remove(uuid);
@@ -67,7 +64,7 @@ public class AbilityLogic implements Listener {
                                 }
 
                                 if (!primary.containsKey(uuid))
-                                    primary.put(uuid, System.currentTimeMillis() + (ability.getPrimaryCooldown() * 1000));
+                                    primary.put(uuid, System.currentTimeMillis() + (primaryCooldown * 1000));
                             } else if (ability.isSecondaryMaterial(item)) {
                                 if (!secondary.containsKey(uuid) || secondary.get(uuid) < System.currentTimeMillis()) {
 
@@ -76,11 +73,7 @@ public class AbilityLogic implements Listener {
                                      */
 
                                     /***/
-                                    switch (ability) {
-                                        case test:
-                                            Test_Ability.runSecondary(p);
-                                            break;
-                                    }
+                                    ability.runSecondary(p);
                                     /***/
 
                                     secondary.remove(uuid);
@@ -89,7 +82,7 @@ public class AbilityLogic implements Listener {
                                 }
 
                                 if (!secondary.containsKey(uuid))
-                                    secondary.put(uuid, System.currentTimeMillis() + (ability.getSecondaryCooldown() * 1000));
+                                    secondary.put(uuid, System.currentTimeMillis() + (secondaryCooldown * 1000));
                             }
                             break;
                     }
@@ -97,6 +90,22 @@ public class AbilityLogic implements Listener {
             }
         }
 
+    }
+
+    @EventHandler
+    public void shift(PlayerToggleSneakEvent e) {
+
+        Player p = e.getPlayer();
+        UUID uuid = p.getUniqueId();
+        ItemStack item = p.getInventory().getItemInMainHand();
+        Material mat = e.getItem() != null ? e.getItem().getType() : null;
+        AbilityUtil ability = Abilities.selectedAbility.containsKey(uuid) ? Abilities.selectedAbility.get(uuid) : null;
+
+        DecimalFormat df = new DecimalFormat("0.00");
+
+        if (p.getGameMode() == GameMode.ADVENTURE || p.getWorld() == Bukkit.getWorld("practice") || p.getWorld() == Bukkit.getWorld("minigames")) { // THEY ARE DEAD ABORT
+            return;
+        }
     }
 
 }
