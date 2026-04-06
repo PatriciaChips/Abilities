@@ -1,13 +1,20 @@
 package org.pat.abilities.Objects;
 
+import io.papermc.paper.datacomponent.item.consumable.ItemUseAnimation;
 import org.bukkit.Material;
 import org.bukkit.Tag;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.Nullable;
+import org.pat.abilities.Abilities;
+import org.pat.abilities.Listeners.AbilityLogic;
 import org.pat.abilities.Objects.Abilities.Test_Ability;
 import org.pat.abilities.Utils;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 public enum AbilityUtil {
 
@@ -16,9 +23,12 @@ public enum AbilityUtil {
      * <p>
      * Material Identifiers can be either Tag or Material objects
      * Tag example: Tag.ITEMS_SWORDS
+     *
+     * Charge duration can be 0
+     * Charge duration will not exist unless a ItemUseAnimation is used
      */
 
-    test(5, 5, Material.STICK, Tag.ITEMS_SWORDS, new Affinity[]{Affinity.movement}, builder -> {
+    test(5, 5, Material.STICK, Tag.ITEMS_SWORDS, new Affinity[]{Affinity.movement}, ItemUseAnimation.BRUSH, null, 20, 0, builder -> {
         builder.add(InterfaceActions.class, new Test_Ability() {
         });
     });
@@ -29,14 +39,24 @@ public enum AbilityUtil {
     private Object secondaryMaterialIdentifier;
     private Affinity[] affinity;
 
+    private ItemUseAnimation primaryAnimation;
+    private ItemUseAnimation secondaryAnimation;
+    private long primaryChargeDuration; // TICKS
+    private long secondaryChargeDuration; // TICKS
+
     private final HashMap<Class<?>, Object> behaviors = new HashMap<>();
 
-    AbilityUtil(long primaryCooldown, long secondaryCooldown, Object primaryMaterialIdentifier, Object secondaryMaterialIdentifier, Affinity[] affinity, AbilityBehaviorBuilder builder) {
+    AbilityUtil(long primaryCooldown, long secondaryCooldown, Object primaryMaterialIdentifier, Object secondaryMaterialIdentifier, Affinity[] affinity, @Nullable ItemUseAnimation primaryAnimation, @Nullable ItemUseAnimation secondaryAnimation, long primaryChargeDuration, long secondaryChargeDuration, AbilityBehaviorBuilder builder) {
         this.primaryCooldown = primaryCooldown;
         this.secondaryCooldown = secondaryCooldown;
         this.primaryMaterialIdentifier = primaryMaterialIdentifier;
         this.secondaryMaterialIdentifier = secondaryMaterialIdentifier;
         this.affinity = affinity;
+
+        this.primaryAnimation = primaryAnimation;
+        this.secondaryAnimation = secondaryAnimation;
+        this.primaryChargeDuration = primaryChargeDuration;
+        this.secondaryChargeDuration = secondaryChargeDuration;
 
         builder.build(new Builder(this));
     }
@@ -63,6 +83,16 @@ public enum AbilityUtil {
         }
     }
 
+    public void runPrimaryCharge(Player p) {
+        InterfaceActions action = get(InterfaceActions.class);
+        if (action != null) action.runPrimaryCharge(p);
+    }
+
+    public void runSecondaryCharge(Player p) {
+        InterfaceActions action = get(InterfaceActions.class);
+        if (action != null) action.runSecondaryCharge(p);
+    }
+
     public void runPrimary(Player p) {
         InterfaceActions action = get(InterfaceActions.class);
         if (action != null) action.runPrimary(p);
@@ -75,12 +105,12 @@ public enum AbilityUtil {
 
     public void tickShiftPassive(Player p) {
         InterfaceActions action = get(InterfaceActions.class);
-        if (action != null) action.runShiftPassive(p);
+        if (action != null) action.tickShiftPassive(p);
     }
 
     public void tickPassive(Player p) {
         InterfaceActions action = get(InterfaceActions.class);
-        if (action != null) action.runPassive(p);
+        if (action != null) action.tickPassive(p);
     }
 
     /**
@@ -158,5 +188,81 @@ public enum AbilityUtil {
 
     public Affinity[] getAffinities() {
         return affinity;
+    }
+
+    /**
+     * Instance of Tag Object will return first material in that tag list
+     */
+
+    public Material getPrimaryMaterial() {
+        if (primaryMaterialIdentifier instanceof Material material)
+            return material;
+        if (primaryMaterialIdentifier instanceof Tag tag)
+            return (Material) tag.getValues().stream().toList().get(0);
+        return null;
+    }
+
+    public Material getSecondaryMaterial() {
+        if (secondaryMaterialIdentifier instanceof Material material)
+            return material;
+        if (secondaryMaterialIdentifier instanceof Tag tag)
+            return (Material) tag.getValues().stream().toList().get(0);
+        return null;
+    }
+
+    /**
+     * Return a list of all materials flagged for primary/secondary
+     */
+
+    public Set<Material> getPrimaryFlaggedItemList() {
+        if (primaryMaterialIdentifier instanceof Material material)
+            return new HashSet<>(Collections.singleton(material));
+        if (primaryMaterialIdentifier instanceof Tag tag)
+            return tag.getValues();
+        return new HashSet<>();
+    }
+
+    public Set<Material> getSecondaryFlaggedItemList() {
+        if (secondaryMaterialIdentifier instanceof Material material)
+            return new HashSet<>(Collections.singleton(material));
+        if (secondaryMaterialIdentifier instanceof Tag tag)
+            return tag.getValues();
+        return new HashSet<>();
+    }
+
+    public ItemUseAnimation getPrimaryAnimation() {
+        return primaryAnimation;
+    }
+
+    public ItemUseAnimation getSecondaryAnimation() {
+        return secondaryAnimation;
+    }
+
+    public boolean hasPrimaryHaveAnimation() {
+        return primaryAnimation != null;
+    }
+
+    public boolean hasSecondaryHaveAnimation() {
+        return secondaryAnimation != null;
+    }
+
+    public long getPrimaryChargeDuration() {
+        return primaryChargeDuration;
+    }
+
+    public long getSecondaryChargeDuration() {
+        return secondaryChargeDuration;
+    }
+
+    public static boolean isChargingAbility(Player p) {
+        return AbilityLogic.isEating.containsKey(p.getUniqueId());
+    }
+
+    public static boolean isChargingPrimary(Player p) {
+        return AbilityLogic.isEating.containsKey(p.getUniqueId()) && AbilityLogic.isEating.get(p.getUniqueId()).left().equalsIgnoreCase("p");
+    }
+
+    public static boolean isChargingSecondary(Player p) {
+        return AbilityLogic.isEating.containsKey(p.getUniqueId()) && AbilityLogic.isEating.get(p.getUniqueId()).left().equalsIgnoreCase("s");
     }
 }

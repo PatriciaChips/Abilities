@@ -10,7 +10,21 @@ public interface Test_Ability extends InterfaceActions {
     /**
      * To create a new ability copy this class and edit this methods; DO NOT RENAME THEM
      * Then you need to create a enum variable
+     *
+     * Remove the functions for running either shift or passive this tells the plugin it doesn't have one of the other
+     * They MUST return true if you do want to use them
      */
+
+    @Override
+    default void runPrimaryCharge(Player p) {
+        p.sendMessage("test primary charging..");
+    }
+
+    @Override
+    default void runSecondaryCharge(Player p) {
+        p.sendMessage("test secondary charging..");
+    }
+
 
     @Override
     default void runPrimary(Player p) {
@@ -23,13 +37,15 @@ public interface Test_Ability extends InterfaceActions {
     }
 
     @Override
-    default void runShiftPassive(Player p) {
+    default boolean tickShiftPassive(Player p) {
         p.sendMessage("test shift passive activated!");
+        return true;
     }
 
     @Override
-    default void runPassive(Player p) {
+    default boolean tickPassive(Player p) {
         p.sendMessage("test passive activated!");
+        return true;
     }
 
 }
