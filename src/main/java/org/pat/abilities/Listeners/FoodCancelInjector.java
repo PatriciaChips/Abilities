@@ -6,23 +6,20 @@ import io.netty.channel.ChannelHandlerContext;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.network.ServerCommonPacketListenerImpl;
-import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import org.bukkit.craftbukkit.v1_21_R7.entity.CraftPlayer;
 import org.bukkit.entity.Player;
-import org.pat.abilities.Abilities;
-import org.pat.abilities.Commands.Ability;
+import org.bukkit.inventory.ItemStack;
 import org.pat.abilities.Objects.AbilityUtil;
+import org.pat.abilities.Utils;
 
 import java.lang.reflect.Field;
 
-public class DigPacketInjector {
+public class FoodCancelInjector {
 
-    private static Field CONNECTION_FIELD;
-    private static Field REAL_CHANNEL_FIELD;
+    public static Field CONNECTION_FIELD;
+    public static Field REAL_CHANNEL_FIELD;
 
     static {
         try {
@@ -70,12 +67,15 @@ public class DigPacketInjector {
                                 ServerboundPlayerActionPacket.Action action = packet.getAction();
                                 switch (action) {
                                     case RELEASE_USE_ITEM:
-                                        AbilityUtil ability = Abilities.selectedAbility.get(p.getUniqueId());
+                                        AbilityUtil ability = Utils.getSelectedAbility(p);
+                                        ItemStack item = p.getInventory().getItemInMainHand();
                                         if (ability != null) {
                                             if (AbilityLogic.isEating.containsKey(p.getUniqueId())) {
-                                                if (p.getInventory().getItemInMainHand().hasData(DataComponentTypes.CONSUMABLE)) {
-                                                    if (ability.getPrimaryMaterial() == p.getInventory().getItemInMainHand().getType() || ability.getSecondaryMaterial() == p.getInventory().getItemInMainHand().getType()) {
-                                                        p.sendMessage(ability.name() + " " + (AbilityLogic.isEating.get(p.getUniqueId()).left().equalsIgnoreCase("p") ? "primary":"secondary") + " charge cancelled!");
+                                                if (item.hasData(DataComponentTypes.CONSUMABLE)) {
+                                                    if (ability.isPrimaryMaterial(item)) {
+                                                        ability.cancelPrimaryCharge(p);
+                                                    } else if (ability.isSecondaryMaterial(item)) {
+                                                        ability.cancelSecondaryCharge(p);
                                                         AbilityLogic.isEating.remove(p.getUniqueId());
                                                     }
                                                 }

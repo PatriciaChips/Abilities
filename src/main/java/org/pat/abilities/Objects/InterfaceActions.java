@@ -15,6 +15,10 @@ public interface InterfaceActions {
 
     void runSecondaryCharge(Player p);
 
+    void cancelPrimaryCharge(Player p);
+
+    void cancelSecondaryCharge(Player p);
+
     void runPrimary(Player p);
 
     void runSecondary(Player p);

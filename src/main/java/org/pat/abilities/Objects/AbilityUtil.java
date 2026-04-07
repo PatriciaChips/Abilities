@@ -20,15 +20,21 @@ public enum AbilityUtil {
 
     /**
      * ENUM NAME IS USED TO IDENTIFY ABILITY
-     * <p>
+     *
      * Material Identifiers can be either Tag or Material objects
      * Tag example: Tag.ITEMS_SWORDS
      *
-     * Charge duration can be 0
+     * Cooldown is in seconds
+     * Charge duration is in ticks
+     *
+     * Charge duration can be 0, uses default eating time (32 ticks)
      * Charge duration will not exist unless a ItemUseAnimation is used
+     *
+     * A null itemModel will return the vanilla model
+     * A null chargedItemModel will return the itemModel (which uses vanilla if both are null)
      */
 
-    test(5, 5, Material.STICK, Tag.ITEMS_SWORDS, new Affinity[]{Affinity.movement}, ItemUseAnimation.BRUSH, null, 20, 0, builder -> {
+    test(5, 5, Material.NETHERITE_AXE, Tag.ITEMS_SWORDS, new Affinity[]{Affinity.movement}, ItemUseAnimation.BRUSH, ItemUseAnimation.TRIDENT, 20, 0, null, "bucket", "bucket", "bucket_c", builder -> {
         builder.add(InterfaceActions.class, new Test_Ability() {
         });
     });
@@ -44,9 +50,15 @@ public enum AbilityUtil {
     private long primaryChargeDuration; // TICKS
     private long secondaryChargeDuration; // TICKS
 
+    private String primaryItemModel; // LOWERCASE
+    private String secondaryItemModel; // LOWERCASE
+    private String primaryChargedItemModel; // LOWERCASE
+    private String secondaryChargedItemModel; // LOWERCASE
+
     private final HashMap<Class<?>, Object> behaviors = new HashMap<>();
 
-    AbilityUtil(long primaryCooldown, long secondaryCooldown, Object primaryMaterialIdentifier, Object secondaryMaterialIdentifier, Affinity[] affinity, @Nullable ItemUseAnimation primaryAnimation, @Nullable ItemUseAnimation secondaryAnimation, long primaryChargeDuration, long secondaryChargeDuration, AbilityBehaviorBuilder builder) {
+    AbilityUtil(long primaryCooldown, long secondaryCooldown, Object primaryMaterialIdentifier, Object secondaryMaterialIdentifier, Affinity[] affinity, @Nullable ItemUseAnimation primaryAnimation, @Nullable ItemUseAnimation secondaryAnimation,
+                long primaryChargeDuration, long secondaryChargeDuration, @Nullable String primaryItemModel, @Nullable String secondaryItemModel, @Nullable String primaryChargedItemModel, @Nullable String secondaryChargedItemModel, AbilityBehaviorBuilder builder) {
         this.primaryCooldown = primaryCooldown;
         this.secondaryCooldown = secondaryCooldown;
         this.primaryMaterialIdentifier = primaryMaterialIdentifier;
@@ -57,6 +69,11 @@ public enum AbilityUtil {
         this.secondaryAnimation = secondaryAnimation;
         this.primaryChargeDuration = primaryChargeDuration;
         this.secondaryChargeDuration = secondaryChargeDuration;
+
+        this.primaryItemModel = primaryItemModel;
+        this.secondaryItemModel = secondaryItemModel;
+        this.primaryChargedItemModel = primaryChargedItemModel;
+        this.secondaryChargedItemModel = secondaryChargedItemModel;
 
         builder.build(new Builder(this));
     }
@@ -91,6 +108,16 @@ public enum AbilityUtil {
     public void runSecondaryCharge(Player p) {
         InterfaceActions action = get(InterfaceActions.class);
         if (action != null) action.runSecondaryCharge(p);
+    }
+
+    public void cancelPrimaryCharge(Player p) {
+        InterfaceActions action = get(InterfaceActions.class);
+        if (action != null) action.cancelPrimaryCharge(p);
+    }
+
+    public void cancelSecondaryCharge(Player p) {
+        InterfaceActions action = get(InterfaceActions.class);
+        if (action != null) action.cancelSecondaryCharge(p);
     }
 
     public void runPrimary(Player p) {
@@ -238,19 +265,23 @@ public enum AbilityUtil {
         return secondaryAnimation;
     }
 
-    public boolean hasPrimaryHaveAnimation() {
+    public boolean hasPrimaryAnimation() {
         return primaryAnimation != null;
     }
 
-    public boolean hasSecondaryHaveAnimation() {
+    public boolean hasSecondaryAnimation() {
         return secondaryAnimation != null;
     }
 
     public long getPrimaryChargeDuration() {
+        if (primaryChargeDuration <= 0)
+            return 32;
         return primaryChargeDuration;
     }
 
     public long getSecondaryChargeDuration() {
+        if (secondaryChargeDuration <= 0)
+            return 32;
         return secondaryChargeDuration;
     }
 
@@ -264,5 +295,56 @@ public enum AbilityUtil {
 
     public static boolean isChargingSecondary(Player p) {
         return AbilityLogic.isEating.containsKey(p.getUniqueId()) && AbilityLogic.isEating.get(p.getUniqueId()).left().equalsIgnoreCase("s");
+    }
+
+    public static void selectAbility(Player p, AbilityUtil ability) {
+        Abilities.selectedAbility.put(p.getUniqueId(), ability);
+        AbilityLogic.applyDataToAbilityItems(ability, p.getInventory().getStorageContents());
+    }
+
+    public static boolean onPrimaryCooldown(Player p) {
+        return AbilityLogic.primaryCooldown.containsKey(p.getUniqueId()) && AbilityLogic.primaryCooldown.get(p.getUniqueId()) > System.currentTimeMillis();
+    }
+
+    public static boolean onSecondaryCooldown(Player p) {
+        return AbilityLogic.secondaryCooldown.containsKey(p.getUniqueId()) && AbilityLogic.secondaryCooldown.get(p.getUniqueId()) > System.currentTimeMillis();
+    }
+
+    public static AbilityUtil getSelectedAbility(Player p) {
+        if (Abilities.selectedAbility.containsKey(p.getUniqueId()))
+            return Abilities.selectedAbility.get(p.getUniqueId());
+        return null;
+    }
+
+    public String getPrimaryItemModel() {
+        return primaryItemModel;
+    }
+
+    public String getSecondaryItemModel() {
+        return secondaryItemModel;
+    }
+
+    public boolean hasPrimaryItemModel() {
+        return getPrimaryItemModel() != null;
+    }
+
+    public boolean hasSecondaryItemModel() {
+        return getSecondaryItemModel() != null;
+    }
+
+    public String getPrimaryChargedItemModel() {
+        return primaryChargedItemModel;
+    }
+
+    public String getSecondaryChargedItemModel() {
+        return secondaryChargedItemModel;
+    }
+
+    public boolean hasPrimaryChargedItemModel() {
+        return getPrimaryChargedItemModel() != null;
+    }
+
+    public boolean hasSecondaryChargedItemModel() {
+        return getSecondaryChargedItemModel() != null;
     }
 }

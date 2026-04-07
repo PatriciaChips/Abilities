@@ -15,6 +15,13 @@ public interface Test_Ability extends InterfaceActions {
      * They MUST return true if you do want to use them
      */
 
+    /**
+     * You do not need the run or cancel method if you do not have an itemUseAnimation as part of either your primary or secondary
+     *
+     * The cancel primary charge is a method that runs as its canceled which can be used to cancel any sounds for example
+     * more commonly though you will need to check if the player is still charging for each action in the charge function and return if they are no longer charging either ability
+     */
+
     @Override
     default void runPrimaryCharge(Player p) {
         p.sendMessage("test primary charging..");
@@ -25,6 +32,15 @@ public interface Test_Ability extends InterfaceActions {
         p.sendMessage("test secondary charging..");
     }
 
+    @Override
+    default void cancelPrimaryCharge(Player p) {
+        p.sendMessage("test primary charged cancelled");
+    }
+
+    @Override
+    default void cancelSecondaryCharge(Player p) {
+        p.sendMessage("test secondary charged cancelled");
+    }
 
     @Override
     default void runPrimary(Player p) {
