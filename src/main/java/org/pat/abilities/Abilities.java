@@ -1,12 +1,14 @@
 package org.pat.abilities;
 
 import io.netty.channel.Channel;
+import it.unimi.dsi.fastutil.Pair;
 import net.minecraft.network.Connection;
 import net.minecraft.server.level.ServerPlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.v1_21_R7.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.pat.abilities.Commands.Ability;
 import org.pat.abilities.Commands.Abug;
 import org.pat.abilities.Listeners.AbilityLogic;
 import org.pat.abilities.Listeners.FoodCancelInjector;
@@ -18,7 +20,7 @@ import java.util.UUID;
 
 public final class Abilities extends JavaPlugin {
 
-    public static HashMap<UUID, AbilityUtil> selectedAbility = new HashMap<>();
+    public static HashMap<UUID, Pair<AbilityUtil, String>> selectedAbility = new HashMap<>();
 
     @Override
     public void onEnable() {

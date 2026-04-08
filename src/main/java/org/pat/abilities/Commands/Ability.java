@@ -14,7 +14,13 @@ public class Ability implements TabExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String cmd, @NotNull String @NotNull [] args) {
 
+        if (args.length == 1) {
 
+
+
+        } else {
+
+        }
 
         return false;
     }
@@ -24,6 +30,10 @@ public class Ability implements TabExecutor {
         List<String> arguments = new ArrayList<>();
 
         return arguments;
+    }
+
+    public static void openAbilitySelectionGUI() {
+
     }
 
 }

@@ -6,6 +6,8 @@ import org.bukkit.scheduler.BukkitScheduler;
 import org.pat.abilities.Objects.AbilityUtil;
 
 import java.security.SecureRandom;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 public class Utils {
 
@@ -14,15 +16,21 @@ public class Utils {
 
     public static AbilityUtil getSelectedAbility(Player p) {
         if (Abilities.selectedAbility.containsKey(p.getUniqueId()))
-            return Abilities.selectedAbility.get(p.getUniqueId());
+            return Abilities.selectedAbility.get(p.getUniqueId()).left();
         return null;
     }
 
-    private final SecureRandom random = new SecureRandom();
-    private final String LETTERS = "abcdefghijklmnopqrstuvwxyz";
-    private final String DIGITS = "0123456789";
+    public static String formatText(String input) { // EG; BLACK_WOOL -> Black Wool
+        return Arrays.stream(input.toLowerCase().split("_"))
+                .map(word -> Character.toUpperCase(word.charAt(0)) + word.substring(1))
+                .collect(Collectors.joining(" "));
+    }
 
-    public String generateRandomID(int digitCount, int letterCount) {
+    static final SecureRandom random = new SecureRandom();
+    static final String LETTERS = "abcdefghijklmnopqrstuvwxyz";
+    static final String DIGITS = "0123456789";
+
+    public static String generateRandomID(int digitCount, int letterCount) {
         StringBuilder id = new StringBuilder();
 
         for (int i = 0; i < digitCount; i++) {

@@ -1,13 +1,18 @@
 package org.pat.abilities.Objects;
 
 import io.papermc.paper.datacomponent.item.consumable.ItemUseAnimation;
+import it.unimi.dsi.fastutil.Pair;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.Tag;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.Nullable;
 import org.pat.abilities.Abilities;
 import org.pat.abilities.Listeners.AbilityLogic;
+import org.pat.abilities.Objects.Abilities.Bloodweaver;
 import org.pat.abilities.Objects.Abilities.Test_Ability;
 import org.pat.abilities.Utils;
 
@@ -20,27 +25,38 @@ public enum AbilityUtil {
 
     /**
      * ENUM NAME IS USED TO IDENTIFY ABILITY
-     *
+     * <p>
      * Material Identifiers can be either Tag or Material objects
      * Tag example: Tag.ITEMS_SWORDS
-     *
+     * <p>
      * Cooldown is in seconds
      * Charge duration is in ticks
      *
+     * Set either shift or normal passive tickrate to <= 0 to disable either one for that ability
+     * <p>
      * Charge duration can be 0, uses default eating time (32 ticks)
      * Charge duration will not exist unless a ItemUseAnimation is used
-     *
+     * <p>
      * A null itemModel will return the vanilla model
      * A null chargedItemModel will return the itemModel (which uses vanilla if both are null)
      */
 
-    test(5, 5, Material.NETHERITE_AXE, Tag.ITEMS_SWORDS, new Affinity[]{Affinity.movement}, ItemUseAnimation.BRUSH, ItemUseAnimation.TRIDENT, 20, 0, null, "bucket", "bucket", "bucket_c", builder -> {
+    test(Material.REDSTONE, 5, 5, 20, 0, Tag.ITEMS_AXES, Tag.ITEMS_SWORDS, new Affinity[]{Affinity.movement}, ItemUseAnimation.BRUSH, ItemUseAnimation.TRIDENT, 20, 0, null, "bucket", "bucket", "bucket_c", builder -> {
         builder.add(InterfaceActions.class, new Test_Ability() {
+        });
+    }),
+
+    bloodweaver(Material.REDSTONE, 5, 5, 1, 0, Tag.ITEMS_AXES, Tag.ITEMS_SWORDS, new Affinity[]{Affinity.movement}, ItemUseAnimation.BRUSH, ItemUseAnimation.TRIDENT, 20, 0, null, "bucket", "bucket", "bucket_c", builder -> {
+        builder.add(InterfaceActions.class, new Bloodweaver() {
         });
     });
 
+    private Material guiItem;
+
     private long primaryCooldown;
     private long secondaryCooldown;
+    private long shiftPassiveTickRate;
+    private long passiveTickRate;
     private Object primaryMaterialIdentifier;
     private Object secondaryMaterialIdentifier;
     private Affinity[] affinity;
@@ -55,12 +71,25 @@ public enum AbilityUtil {
     private String primaryChargedItemModel; // LOWERCASE
     private String secondaryChargedItemModel; // LOWERCASE
 
+    private String primaryName;
+    private String secondaryName;
+    private String primaryDescription;
+    private String secondaryDescription;
+    private String shiftPassiveDescription;
+    private String passiveDescription;
+
     private final HashMap<Class<?>, Object> behaviors = new HashMap<>();
 
-    AbilityUtil(long primaryCooldown, long secondaryCooldown, Object primaryMaterialIdentifier, Object secondaryMaterialIdentifier, Affinity[] affinity, @Nullable ItemUseAnimation primaryAnimation, @Nullable ItemUseAnimation secondaryAnimation,
+    public static Material axeVanity = Material.MAGMA_CREAM;
+
+    AbilityUtil(Material guiItem, long primaryCooldown, long secondaryCooldown, long shiftPassiveTickRate, long passiveTickRate, Object primaryMaterialIdentifier, Object secondaryMaterialIdentifier, Affinity[] affinity, @Nullable ItemUseAnimation primaryAnimation, @Nullable ItemUseAnimation secondaryAnimation,
                 long primaryChargeDuration, long secondaryChargeDuration, @Nullable String primaryItemModel, @Nullable String secondaryItemModel, @Nullable String primaryChargedItemModel, @Nullable String secondaryChargedItemModel, AbilityBehaviorBuilder builder) {
+        this.guiItem = guiItem;
+
         this.primaryCooldown = primaryCooldown;
         this.secondaryCooldown = secondaryCooldown;
+        this.shiftPassiveTickRate = shiftPassiveTickRate;
+        this.passiveTickRate = passiveTickRate;
         this.primaryMaterialIdentifier = primaryMaterialIdentifier;
         this.secondaryMaterialIdentifier = secondaryMaterialIdentifier;
         this.affinity = affinity;
@@ -179,6 +208,11 @@ public enum AbilityUtil {
         if (item == null)
             return false;
 
+        item = item.clone();
+
+        if (item.getType() == axeVanity && item.getPersistentDataContainer().has(new NamespacedKey(Utils.plugin, "material"), PersistentDataType.STRING))
+            item.setType(Material.valueOf(item.getPersistentDataContainer().get(new NamespacedKey(Utils.plugin, "material"), PersistentDataType.STRING)));
+
         if (primaryMaterialIdentifier instanceof Material)
             return primaryMaterialIdentifier == item.getType();
 
@@ -195,6 +229,11 @@ public enum AbilityUtil {
     public boolean isSecondaryMaterial(ItemStack item) {
         if (item == null)
             return false;
+
+        item = item.clone();
+
+        if (item.getType() == axeVanity && item.getPersistentDataContainer().has(new NamespacedKey(Utils.plugin, "material"), PersistentDataType.STRING))
+            item.setType(Material.valueOf(item.getPersistentDataContainer().get(new NamespacedKey(Utils.plugin, "material"), PersistentDataType.STRING)));
 
         if (secondaryMaterialIdentifier instanceof Material)
             return secondaryMaterialIdentifier == item.getType();
@@ -298,8 +337,21 @@ public enum AbilityUtil {
     }
 
     public static void selectAbility(Player p, AbilityUtil ability) {
-        Abilities.selectedAbility.put(p.getUniqueId(), ability);
-        AbilityLogic.applyDataToAbilityItems(ability, p.getInventory().getStorageContents());
+        String selectionId = Utils.generateRandomID(5, 5);
+        Abilities.selectedAbility.put(p.getUniqueId(), Pair.of(ability, selectionId));
+        AbilityLogic.applyDataToAbilityItems(ability, p.getInventory().getStorageContents(), p);
+        if (ability.hasPassive()) {
+            new BukkitRunnable() {
+                public void run() {
+                    if (getSelectedAbility(p) == null || !getSelectedAbilityID(p).equalsIgnoreCase(selectionId)) {
+                        cancel();
+                        return;
+                    }
+
+                    ability.tickPassive(p);
+                }
+            }.runTaskTimer(Utils.plugin, 0L, ability.getPassiveTickRate());
+        }
     }
 
     public static boolean onPrimaryCooldown(Player p) {
@@ -312,7 +364,13 @@ public enum AbilityUtil {
 
     public static AbilityUtil getSelectedAbility(Player p) {
         if (Abilities.selectedAbility.containsKey(p.getUniqueId()))
-            return Abilities.selectedAbility.get(p.getUniqueId());
+            return Abilities.selectedAbility.get(p.getUniqueId()).left();
+        return null;
+    }
+
+    public static String getSelectedAbilityID(Player p) {
+        if (Abilities.selectedAbility.containsKey(p.getUniqueId()))
+            return Abilities.selectedAbility.get(p.getUniqueId()).right();
         return null;
     }
 
@@ -346,5 +404,33 @@ public enum AbilityUtil {
 
     public boolean hasSecondaryChargedItemModel() {
         return getSecondaryChargedItemModel() != null;
+    }
+
+    public long getPassiveTickRate() {
+        return passiveTickRate;
+    }
+
+    public long getShiftPassiveTickRate() {
+        return shiftPassiveTickRate;
+    }
+
+    public boolean hasPassive() {
+        return getPassiveTickRate() > 0;
+    }
+
+    public boolean hasShiftPassive() {
+        return getShiftPassiveTickRate() > 0;
+    }
+
+    /**
+     * Strictly for axes and their annoying ass properties, just ignore this I had to make a workaround to allow axes to be edible
+     */
+
+    public static Material getHiddenMaterial(ItemStack item) {
+        if (item.getType() == axeVanity && item.getPersistentDataContainer().has(new NamespacedKey(Utils.plugin, "material"), PersistentDataType.STRING)) {
+            return Material.valueOf(item.getPersistentDataContainer().get(new NamespacedKey(Utils.plugin, "material"), PersistentDataType.STRING));
+        } else {
+            return null;
+        }
     }
 }

@@ -20,7 +20,7 @@ public class Join implements Listener {
         UUID uuid = p.getUniqueId();
         ItemStack item = p.getInventory().getItemInMainHand();
         Material mat = item != null ? item.getType() : null;
-        AbilityUtil ability = Abilities.selectedAbility.containsKey(uuid) ? Abilities.selectedAbility.get(uuid) : null;
+        AbilityUtil ability = AbilityUtil.getSelectedAbility(p);
 
         FoodCancelInjector.inject(p);
 

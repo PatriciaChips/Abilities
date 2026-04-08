@@ -1,14 +1,12 @@
 package org.pat.abilities.Listeners;
 
+import io.papermc.paper.datacomponent.DataComponentType;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.Consumable;
 import io.papermc.paper.datacomponent.item.CustomModelData;
 import it.unimi.dsi.fastutil.Pair;
 import net.kyori.adventure.key.Key;
-import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
-import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
+import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -19,12 +17,16 @@ import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.jetbrains.annotations.NotNull;
 import org.pat.abilities.Abilities;
 import org.pat.abilities.Objects.AbilityUtil;
 import org.pat.abilities.Utils;
 
 import java.text.DecimalFormat;
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 
 public class AbilityLogic implements Listener {
@@ -143,7 +145,7 @@ public class AbilityLogic implements Listener {
         UUID uuid = p.getUniqueId();
         ItemStack item = e.getItem();
         Material mat = e.getItem() != null ? e.getItem().getType() : null;
-        AbilityUtil ability = Abilities.selectedAbility.containsKey(uuid) ? Abilities.selectedAbility.get(uuid) : null;
+        AbilityUtil ability = Abilities.selectedAbility.containsKey(uuid) ? Abilities.selectedAbility.get(uuid).left() : null;
 
         DecimalFormat df = new DecimalFormat("0.00");
 
@@ -172,10 +174,12 @@ public class AbilityLogic implements Listener {
                             isEating.remove(uuid);
                             Utils.scheduler.runTaskLater(Utils.plugin, () -> {
                                 if (Utils.getSelectedAbility(p) != null) {
-                                    applyDataToAbilityItems(ability, p.getInventory().getStorageContents());
-                                    applyItemModelData(ability, p.getInventory().getStorageContents(), p);
+                                    applyDataToAbilityItems(ability, p.getInventory().getStorageContents(), p);
+                                    Utils.scheduler.runTaskLater(Utils.plugin, () -> {
+                                        applyItemModelData(ability, p.getInventory().getStorageContents(), p);
+                                    }, 2);
                                 }
-                            }, (ability.getPrimaryCooldown() * 20) + 1);
+                            }, (ability.getPrimaryCooldown() * 20) - 1);
                             /***/
 
                             AbilityLogic.primaryCooldown.remove(uuid);
@@ -199,10 +203,11 @@ public class AbilityLogic implements Listener {
                             isEating.remove(uuid);
                             Utils.scheduler.runTaskLater(Utils.plugin, () -> {
                                 if (Utils.getSelectedAbility(p) != null) {
-                                    applyDataToAbilityItems(ability, p.getInventory().getStorageContents());
-                                    applyItemModelData(ability, p.getInventory().getStorageContents(), p);
-                                }
-                            }, (ability.getPrimaryCooldown() * 20) + 1);
+                                    applyDataToAbilityItems(ability, p.getInventory().getStorageContents(), p);
+                                    Utils.scheduler.runTaskLater(Utils.plugin, () -> {
+                                        applyItemModelData(ability, p.getInventory().getStorageContents(), p);
+                                    }, 2);                                }
+                            }, (ability.getPrimaryCooldown() * 20) - 1);
                             /***/
 
                             AbilityLogic.secondaryCooldown.remove(uuid);
@@ -225,7 +230,7 @@ public class AbilityLogic implements Listener {
         UUID uuid = p.getUniqueId();
         ItemStack item = e.getOffHandItem();
         Material mat = item != null ? item.getType() : null;
-        AbilityUtil ability = Abilities.selectedAbility.containsKey(uuid) ? Abilities.selectedAbility.get(uuid) : null;
+        AbilityUtil ability = Abilities.selectedAbility.containsKey(uuid) ? Abilities.selectedAbility.get(uuid).left() : null;
 
         DecimalFormat df = new DecimalFormat("0.00");
 
@@ -253,6 +258,8 @@ public class AbilityLogic implements Listener {
 
     }
 
+    public static HashMap<UUID, Pair<String, Long>> shiftRunnables = new HashMap<>();
+
     @EventHandler
     public void shift(PlayerToggleSneakEvent e) {
 
@@ -260,7 +267,7 @@ public class AbilityLogic implements Listener {
         UUID uuid = p.getUniqueId();
         ItemStack item = p.getInventory().getItemInMainHand();
         Material mat = item != null ? item.getType() : null;
-        AbilityUtil ability = Abilities.selectedAbility.containsKey(uuid) ? Abilities.selectedAbility.get(uuid) : null;
+        AbilityUtil ability = Abilities.selectedAbility.containsKey(uuid) ? Abilities.selectedAbility.get(uuid).left() : null;
 
         DecimalFormat df = new DecimalFormat("0.00");
 
@@ -271,19 +278,97 @@ public class AbilityLogic implements Listener {
         if (ability != null) {
             if (item != null) {
                 if (ability.isPrimaryMaterial(item) || ability.isSecondaryMaterial(item)) { /** Only run shift passive if they are holding one of their ability items */
+
+                    if (ability.hasShiftPassive()) {
+                        String shiftID = Utils.generateRandomID(5, 5);
+                        long time = shiftRunnables.containsKey(uuid) ? shiftRunnables.get(uuid).right():0;
+                        shiftRunnables.put(uuid, Pair.of(shiftID, System.currentTimeMillis() + (ability.getShiftPassiveTickRate() * 50)));
+                        new BukkitRunnable() {
+                            public void run() {
+                                if (AbilityUtil.getSelectedAbility(p) == null || !shiftRunnables.containsKey(uuid) || !shiftRunnables.get(uuid).left().equalsIgnoreCase(shiftID)) {
+                                    cancel();
+                                    return;
+                                }
+
+                                if (p.isSneaking()) {
+                                    ability.tickShiftPassive(p);
+                                    shiftRunnables.put(uuid, Pair.of(shiftID, System.currentTimeMillis() + (ability.getShiftPassiveTickRate() * 50)));
+                                }
+                            }
+                        }.runTaskTimer(Utils.plugin, shiftRunnables.containsKey(uuid) && time - System.currentTimeMillis() > 0 ? (time - System.currentTimeMillis()) / 50:0, ability.getShiftPassiveTickRate());
+                    }
+                    // runnable is delayed IF the player had just shifted
                 }
             }
         }
 
     }
 
-    public static void applyDataToAbilityItems(AbilityUtil ability, ItemStack[] items) {
+    public static void applyDataToAbilityItems(AbilityUtil ability, ItemStack[] items, Player p) {
         for (ItemStack item : items) {
             if (item != null) {
+                Material material = item.getType();
+                boolean isAbilityItem = false;
                 if (ability.isPrimaryMaterial(item)) {
                     setPrimaryItemData(item, ability);
+                    isAbilityItem = true;
                 } else if (ability.isSecondaryMaterial(item)) {
                     setSecondaryItemData(item, ability);
+                    isAbilityItem = true;
+                }
+                if (isAbilityItem) {
+                    if (Tag.ITEMS_AXES.isTagged(material)) {
+                        item.setType(AbilityUtil.axeVanity);
+
+                        ItemStack axe = new ItemStack(material);
+                        if (axe.hasData(DataComponentTypes.MAX_DAMAGE))
+                            item.setData(DataComponentTypes.MAX_DAMAGE, axe.getData(DataComponentTypes.MAX_DAMAGE));
+                        if (axe.hasData(DataComponentTypes.DAMAGE))
+                            item.setData(DataComponentTypes.DAMAGE, axe.getData(DataComponentTypes.DAMAGE));
+                        if (axe.hasData(DataComponentTypes.USE_EFFECTS))
+                            item.setData(DataComponentTypes.USE_EFFECTS, axe.getData(DataComponentTypes.USE_EFFECTS));
+                        if (axe.hasData(DataComponentTypes.CUSTOM_NAME))
+                            item.setData(DataComponentTypes.CUSTOM_NAME, axe.getData(DataComponentTypes.CUSTOM_NAME));
+                        if (axe.hasData(DataComponentTypes.ITEM_NAME))
+                            item.setData(DataComponentTypes.ITEM_NAME, axe.getData(DataComponentTypes.ITEM_NAME));
+                        if ((ability.isPrimaryMaterial(item) && !ability.hasPrimaryItemModel()) || (ability.isSecondaryMaterial(item) && !ability.hasSecondaryItemModel())) {
+                            if (axe.hasData(DataComponentTypes.ITEM_MODEL))
+                                item.setData(DataComponentTypes.ITEM_MODEL, axe.getData(DataComponentTypes.ITEM_MODEL));
+                        } else {
+                            applyItemModelData(ability, items, p);
+                        }
+                        if (axe.hasData(DataComponentTypes.LORE))
+                            item.setData(DataComponentTypes.LORE, axe.getData(DataComponentTypes.LORE));
+                        if (axe.hasData(DataComponentTypes.RARITY))
+                            item.setData(DataComponentTypes.RARITY, axe.getData(DataComponentTypes.RARITY));
+                        if (axe.hasData(DataComponentTypes.ENCHANTMENTS))
+                            item.setData(DataComponentTypes.ENCHANTMENTS, axe.getData(DataComponentTypes.ENCHANTMENTS));
+                        if (axe.hasData(DataComponentTypes.ATTRIBUTE_MODIFIERS))
+                            item.setData(DataComponentTypes.ATTRIBUTE_MODIFIERS, axe.getData(DataComponentTypes.ATTRIBUTE_MODIFIERS));
+                        if (axe.hasData(DataComponentTypes.TOOLTIP_DISPLAY))
+                            item.setData(DataComponentTypes.TOOLTIP_DISPLAY, axe.getData(DataComponentTypes.TOOLTIP_DISPLAY));
+                        if (axe.hasData(DataComponentTypes.REPAIR_COST))
+                            item.setData(DataComponentTypes.REPAIR_COST, axe.getData(DataComponentTypes.REPAIR_COST));
+                        if (axe.hasData(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE))
+                            item.setData(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, axe.getData(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE));
+                        if (axe.hasData(DataComponentTypes.DAMAGE_RESISTANT))
+                            item.setData(DataComponentTypes.DAMAGE_RESISTANT, axe.getData(DataComponentTypes.DAMAGE_RESISTANT));
+                        if (axe.hasData(DataComponentTypes.TOOL))
+                            item.setData(DataComponentTypes.TOOL, axe.getData(DataComponentTypes.TOOL));
+                        if (axe.hasData(DataComponentTypes.WEAPON))
+                            item.setData(DataComponentTypes.WEAPON, axe.getData(DataComponentTypes.WEAPON));
+                        if (axe.hasData(DataComponentTypes.ENCHANTABLE))
+                            item.setData(DataComponentTypes.ENCHANTABLE, axe.getData(DataComponentTypes.ENCHANTABLE));
+                        if (axe.hasData(DataComponentTypes.REPAIRABLE))
+                            item.setData(DataComponentTypes.REPAIRABLE, axe.getData(DataComponentTypes.REPAIRABLE));
+                        if (axe.hasData(DataComponentTypes.SWING_ANIMATION))
+                            item.setData(DataComponentTypes.SWING_ANIMATION, axe.getData(DataComponentTypes.SWING_ANIMATION));
+                        if (axe.hasData(DataComponentTypes.STORED_ENCHANTMENTS))
+                            item.setData(DataComponentTypes.STORED_ENCHANTMENTS, axe.getData(DataComponentTypes.STORED_ENCHANTMENTS));
+                        ItemMeta im = item.getItemMeta();
+                        im.getPersistentDataContainer().set(new NamespacedKey(Utils.plugin, "material"), PersistentDataType.STRING, material.name());
+                        item.setItemMeta(im);
+                    }
                 }
             }
         }
@@ -299,6 +384,9 @@ public class AbilityLogic implements Listener {
 
     public static void applyItemModelData(AbilityUtil ability, ItemStack[] items, Player p) {
         for (ItemStack item : items) {
+            if (item == null)
+                continue;
+
             ItemMeta im = item.getItemMeta();
             if (ability.isPrimaryMaterial(item)) {
                 if (item != null) {
@@ -306,13 +394,17 @@ public class AbilityLogic implements Listener {
                         if (ability.hasPrimaryItemModel()) {
                             im.setItemModel(new NamespacedKey("abilities", ability.getPrimaryItemModel()));
                         } else {
-                            im.setItemModel(null);
+                            if (AbilityUtil.getHiddenMaterial(item) != null) {
+                                im.setItemModel(new NamespacedKey("minecraft", AbilityUtil.getHiddenMaterial(item).name().toLowerCase()));
+                            } else {
+                                im.setItemModel(null);
+                            }
                         }
                     } else {
                         if (ability.hasPrimaryChargedItemModel()) {
                             im.setItemModel(new NamespacedKey("abilities", ability.getPrimaryChargedItemModel()));
                         } else {
-                            im.setItemModel(ability.hasPrimaryItemModel() ? new NamespacedKey("abilities", ability.getPrimaryItemModel()):null);
+                            im.setItemModel(ability.hasPrimaryItemModel() ? new NamespacedKey("abilities", ability.getPrimaryItemModel()) : null);
                         }
                     }
                 }
@@ -321,13 +413,17 @@ public class AbilityLogic implements Listener {
                     if (ability.hasSecondaryItemModel()) {
                         im.setItemModel(new NamespacedKey("abilities", ability.getSecondaryItemModel()));
                     } else {
-                        im.setItemModel(null);
+                        if (AbilityUtil.getHiddenMaterial(item) != null) {
+                            im.setItemModel(new NamespacedKey("minecraft", AbilityUtil.getHiddenMaterial(item).name().toLowerCase()));
+                        } else {
+                            im.setItemModel(null);
+                        }
                     }
                 } else {
                     if (ability.hasSecondaryChargedItemModel()) {
                         im.setItemModel(new NamespacedKey("abilities", ability.getSecondaryChargedItemModel()));
                     } else {
-                        im.setItemModel(ability.hasSecondaryItemModel() ? new NamespacedKey("abilities", ability.getSecondaryItemModel()):null);
+                        im.setItemModel(ability.hasSecondaryItemModel() ? new NamespacedKey("abilities", ability.getSecondaryItemModel()) : null);
                     }
                 }
             }

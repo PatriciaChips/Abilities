@@ -1,5 +1,6 @@
 package org.pat.abilities.Objects.Abilities;
 
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.pat.abilities.Objects.InterfaceActions;
@@ -25,11 +26,13 @@ public interface Test_Ability extends InterfaceActions {
     @Override
     default void runPrimaryCharge(Player p) {
         p.sendMessage("test primary charging..");
+        p.playSound(p, Sound.BLOCK_NOTE_BLOCK_DIDGERIDOO, 1, 1);
     }
 
     @Override
     default void runSecondaryCharge(Player p) {
         p.sendMessage("test secondary charging..");
+        p.playSound(p, Sound.BLOCK_NOTE_BLOCK_DIDGERIDOO, 1, 1);
     }
 
     @Override
@@ -54,13 +57,13 @@ public interface Test_Ability extends InterfaceActions {
 
     @Override
     default boolean tickShiftPassive(Player p) {
-        p.sendMessage("test shift passive activated!");
+        p.sendMessage("test shift passive ticked!");
         return true;
     }
 
     @Override
     default boolean tickPassive(Player p) {
-        p.sendMessage("test passive activated!");
+        p.sendMessage("test passive ticked!");
         return true;
     }
 
