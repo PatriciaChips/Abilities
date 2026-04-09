@@ -9,7 +9,7 @@ import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-public class Utils {
+public class TilsU {
 
     public static Plugin plugin = Abilities.getPlugin(Abilities.class);
     public static BukkitScheduler scheduler = plugin.getServer().getScheduler();

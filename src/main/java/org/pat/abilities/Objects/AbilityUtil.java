@@ -14,7 +14,7 @@ import org.pat.abilities.Abilities;
 import org.pat.abilities.Listeners.AbilityLogic;
 import org.pat.abilities.Objects.Abilities.Bloodweaver;
 import org.pat.abilities.Objects.Abilities.Test_Ability;
-import org.pat.abilities.Utils;
+import org.pat.abilities.TilsU;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -31,7 +31,7 @@ public enum AbilityUtil {
      * <p>
      * Cooldown is in seconds
      * Charge duration is in ticks
-     *
+     * <p>
      * Set either shift or normal passive tickrate to <= 0 to disable either one for that ability
      * <p>
      * Charge duration can be 0, uses default eating time (32 ticks)
@@ -41,15 +41,33 @@ public enum AbilityUtil {
      * A null chargedItemModel will return the itemModel (which uses vanilla if both are null)
      */
 
-    test(Material.REDSTONE, 5, 5, 20, 0, Tag.ITEMS_AXES, Tag.ITEMS_SWORDS, new Affinity[]{Affinity.movement}, ItemUseAnimation.BRUSH, ItemUseAnimation.TRIDENT, 20, 0, null, "bucket", "bucket", "bucket_c", builder -> {
-        builder.add(InterfaceActions.class, new Test_Ability() {
-        });
-    }),
+    test(Material.REDSTONE, 5, 5, 20, 0, Tag.ITEMS_AXES, Tag.ITEMS_SWORDS, new Affinity[]{Affinity.movement}, ItemUseAnimation.BRUSH, ItemUseAnimation.TRIDENT, 20, 0, null, "bucket", "bucket", "bucket_c",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            builder -> {
+                builder.add(InterfaceActions.class, new Test_Ability() {
+                });
+            }),
 
-    bloodweaver(Material.REDSTONE, 5, 5, 1, 0, Tag.ITEMS_AXES, Tag.ITEMS_SWORDS, new Affinity[]{Affinity.movement}, ItemUseAnimation.BRUSH, ItemUseAnimation.TRIDENT, 20, 0, null, "bucket", "bucket", "bucket_c", builder -> {
-        builder.add(InterfaceActions.class, new Bloodweaver() {
-        });
-    });
+    bloodweaver(Material.REDSTONE, 1, 2, 20, 1, Tag.ITEMS_SWORDS, Tag.ITEMS_AXES, new Affinity[]{Affinity.movement}, ItemUseAnimation.BRUSH, ItemUseAnimation.TRIDENT, 10, 0, null, null, null, null,
+            "Vital Kunai",
+            "Blood Rush",
+            "Life-drain",
+            "Blood Reservoir",
+            "Shoot a selection of blood soaked kunai that steals hp from hit players.",
+            "Use a portion of your hp to launch forward.",
+            "Shifting near players will steal their blood, which is stored and can be used via; Vital Kunai.",
+            "Stored blood is displayed in the xp bar, the more blood stored the more effective Life-drain becomes.",
+            builder -> {
+                builder.add(InterfaceActions.class, new Bloodweaver() {
+                });
+            });
 
     private Material guiItem;
 
@@ -73,6 +91,8 @@ public enum AbilityUtil {
 
     private String primaryName;
     private String secondaryName;
+    private String shiftPassiveName;
+    private String passiveName;
     private String primaryDescription;
     private String secondaryDescription;
     private String shiftPassiveDescription;
@@ -83,7 +103,7 @@ public enum AbilityUtil {
     public static Material axeVanity = Material.MAGMA_CREAM;
 
     AbilityUtil(Material guiItem, long primaryCooldown, long secondaryCooldown, long shiftPassiveTickRate, long passiveTickRate, Object primaryMaterialIdentifier, Object secondaryMaterialIdentifier, Affinity[] affinity, @Nullable ItemUseAnimation primaryAnimation, @Nullable ItemUseAnimation secondaryAnimation,
-                long primaryChargeDuration, long secondaryChargeDuration, @Nullable String primaryItemModel, @Nullable String secondaryItemModel, @Nullable String primaryChargedItemModel, @Nullable String secondaryChargedItemModel, AbilityBehaviorBuilder builder) {
+                long primaryChargeDuration, long secondaryChargeDuration, @Nullable String primaryItemModel, @Nullable String secondaryItemModel, @Nullable String primaryChargedItemModel, @Nullable String secondaryChargedItemModel, String primaryName, String secondaryName, String shiftPassiveName, String passiveName, String primaryDescription, String secondaryDescription, String shiftPassiveDescription, String passiveDescription, AbilityBehaviorBuilder builder) {
         this.guiItem = guiItem;
 
         this.primaryCooldown = primaryCooldown;
@@ -103,6 +123,15 @@ public enum AbilityUtil {
         this.secondaryItemModel = secondaryItemModel;
         this.primaryChargedItemModel = primaryChargedItemModel;
         this.secondaryChargedItemModel = secondaryChargedItemModel;
+
+        this.primaryName = primaryName;
+        this.secondaryName = secondaryName;
+        this.shiftPassiveName = shiftPassiveName;
+        this.passiveName = passiveName;
+        this.primaryDescription = primaryDescription;
+        this.secondaryDescription = secondaryDescription;
+        this.shiftPassiveDescription = shiftPassiveDescription;
+        this.passiveDescription = passiveDescription;
 
         builder.build(new Builder(this));
     }
@@ -131,42 +160,52 @@ public enum AbilityUtil {
 
     public void runPrimaryCharge(Player p) {
         InterfaceActions action = get(InterfaceActions.class);
-        if (action != null) action.runPrimaryCharge(p);
+        if (action != null) action.runPrimaryCharge(p, this);
     }
 
     public void runSecondaryCharge(Player p) {
         InterfaceActions action = get(InterfaceActions.class);
-        if (action != null) action.runSecondaryCharge(p);
+        if (action != null) action.runSecondaryCharge(p, this);
     }
 
     public void cancelPrimaryCharge(Player p) {
         InterfaceActions action = get(InterfaceActions.class);
-        if (action != null) action.cancelPrimaryCharge(p);
+        if (action != null) action.cancelPrimaryCharge(p, this);
     }
 
     public void cancelSecondaryCharge(Player p) {
         InterfaceActions action = get(InterfaceActions.class);
-        if (action != null) action.cancelSecondaryCharge(p);
+        if (action != null) action.cancelSecondaryCharge(p, this);
     }
 
     public void runPrimary(Player p) {
         InterfaceActions action = get(InterfaceActions.class);
-        if (action != null) action.runPrimary(p);
+        if (action != null) action.runPrimary(p, this);
     }
 
     public void runSecondary(Player p) {
         InterfaceActions action = get(InterfaceActions.class);
-        if (action != null) action.runSecondary(p);
+        if (action != null) action.runSecondary(p, this);
     }
 
     public void tickShiftPassive(Player p) {
         InterfaceActions action = get(InterfaceActions.class);
-        if (action != null) action.tickShiftPassive(p);
+        if (action != null) action.tickShiftPassive(p, this);
     }
 
     public void tickPassive(Player p) {
         InterfaceActions action = get(InterfaceActions.class);
-        if (action != null) action.tickPassive(p);
+        if (action != null) action.tickPassive(p, this);
+    }
+
+    public void selectAbilityLogic(Player p) {
+        InterfaceActions action = get(InterfaceActions.class);
+        if (action != null) action.selectAbility(p, this);
+    }
+
+    public void unselectAbilityLogic(Player p) {
+        InterfaceActions action = get(InterfaceActions.class);
+        if (action != null) action.unselectAbility(p, this);
     }
 
     /**
@@ -174,17 +213,17 @@ public enum AbilityUtil {
      */
 
     public void saveToConfig() {
-        Utils.scheduler.runTaskAsynchronously(Utils.plugin, () -> {
-            Utils.plugin.getConfig().set("Abilities." + name() + ".primary", primaryCooldown);
-            Utils.plugin.getConfig().set("Abilities." + name() + ".secondary", secondaryCooldown);
-            Utils.plugin.saveConfig();
+        TilsU.scheduler.runTaskAsynchronously(TilsU.plugin, () -> {
+            TilsU.plugin.getConfig().set("Abilities." + name() + ".primary", primaryCooldown);
+            TilsU.plugin.getConfig().set("Abilities." + name() + ".secondary", secondaryCooldown);
+            TilsU.plugin.saveConfig();
         });
     }
 
     public void loadFromConfig() {
-        if (Utils.plugin.getConfig().contains("Abilities." + name())) {
-            setPrimaryCooldown(Utils.plugin.getConfig().getLong("Abilities." + name() + ".primary"));
-            setSecondaryCooldown(Utils.plugin.getConfig().getLong("Abilities." + name() + ".secondary"));
+        if (TilsU.plugin.getConfig().contains("Abilities." + name())) {
+            setPrimaryCooldown(TilsU.plugin.getConfig().getLong("Abilities." + name() + ".primary"));
+            setSecondaryCooldown(TilsU.plugin.getConfig().getLong("Abilities." + name() + ".secondary"));
         }
     }
 
@@ -210,8 +249,8 @@ public enum AbilityUtil {
 
         item = item.clone();
 
-        if (item.getType() == axeVanity && item.getPersistentDataContainer().has(new NamespacedKey(Utils.plugin, "material"), PersistentDataType.STRING))
-            item.setType(Material.valueOf(item.getPersistentDataContainer().get(new NamespacedKey(Utils.plugin, "material"), PersistentDataType.STRING)));
+        if (item.getType() == axeVanity && item.getPersistentDataContainer().has(new NamespacedKey(TilsU.plugin, "material"), PersistentDataType.STRING))
+            item.setType(Material.valueOf(item.getPersistentDataContainer().get(new NamespacedKey(TilsU.plugin, "material"), PersistentDataType.STRING)));
 
         if (primaryMaterialIdentifier instanceof Material)
             return primaryMaterialIdentifier == item.getType();
@@ -232,8 +271,8 @@ public enum AbilityUtil {
 
         item = item.clone();
 
-        if (item.getType() == axeVanity && item.getPersistentDataContainer().has(new NamespacedKey(Utils.plugin, "material"), PersistentDataType.STRING))
-            item.setType(Material.valueOf(item.getPersistentDataContainer().get(new NamespacedKey(Utils.plugin, "material"), PersistentDataType.STRING)));
+        if (item.getType() == axeVanity && item.getPersistentDataContainer().has(new NamespacedKey(TilsU.plugin, "material"), PersistentDataType.STRING))
+            item.setType(Material.valueOf(item.getPersistentDataContainer().get(new NamespacedKey(TilsU.plugin, "material"), PersistentDataType.STRING)));
 
         if (secondaryMaterialIdentifier instanceof Material)
             return secondaryMaterialIdentifier == item.getType();
@@ -337,9 +376,14 @@ public enum AbilityUtil {
     }
 
     public static void selectAbility(Player p, AbilityUtil ability) {
-        String selectionId = Utils.generateRandomID(5, 5);
+        if (Abilities.selectedAbility.containsKey(p.getUniqueId())) {
+            unselectAbility(p, ability);
+        }
+
+        String selectionId = TilsU.generateRandomID(5, 5);
         Abilities.selectedAbility.put(p.getUniqueId(), Pair.of(ability, selectionId));
         AbilityLogic.applyDataToAbilityItems(ability, p.getInventory().getStorageContents(), p);
+        ability.selectAbilityLogic(p);
         if (ability.hasPassive()) {
             new BukkitRunnable() {
                 public void run() {
@@ -350,8 +394,13 @@ public enum AbilityUtil {
 
                     ability.tickPassive(p);
                 }
-            }.runTaskTimer(Utils.plugin, 0L, ability.getPassiveTickRate());
+            }.runTaskTimer(TilsU.plugin, 0L, ability.getPassiveTickRate());
         }
+    }
+
+    public static void unselectAbility(Player p, AbilityUtil ability) {
+        Abilities.selectedAbility.remove(p.getUniqueId());
+        ability.unselectAbilityLogic(p);
     }
 
     public static boolean onPrimaryCooldown(Player p) {
@@ -427,10 +476,72 @@ public enum AbilityUtil {
      */
 
     public static Material getHiddenMaterial(ItemStack item) {
-        if (item.getType() == axeVanity && item.getPersistentDataContainer().has(new NamespacedKey(Utils.plugin, "material"), PersistentDataType.STRING)) {
-            return Material.valueOf(item.getPersistentDataContainer().get(new NamespacedKey(Utils.plugin, "material"), PersistentDataType.STRING));
+        if (item.getType() == axeVanity && item.getPersistentDataContainer().has(new NamespacedKey(TilsU.plugin, "material"), PersistentDataType.STRING)) {
+            return Material.valueOf(item.getPersistentDataContainer().get(new NamespacedKey(TilsU.plugin, "material"), PersistentDataType.STRING));
         } else {
             return null;
         }
     }
+
+    public Material getGuiItem() {
+        return guiItem;
+    }
+
+    public String getPrimaryName() {
+        return primaryName;
+    }
+
+    public String getSecondaryName() {
+        return secondaryName;
+    }
+
+    public String getShiftPassiveName() {
+        return shiftPassiveName;
+    }
+
+    public String getPassiveName() {
+        return passiveName;
+    }
+
+    public String getPrimaryDescription() {
+        return primaryDescription;
+    }
+
+    public String getSecondaryDescription() {
+        return secondaryDescription;
+    }
+
+    public String getShiftPassiveDescription() {
+        return shiftPassiveDescription;
+    }
+
+    public String getPassiveDescription() {
+        return passiveDescription;
+    }
+
+    public static String MaterialToTangibleLoreFormat(Material mat) {
+        if (Tag.ITEMS_SWORDS.isTagged(mat)) {
+            return "Sword";
+        }
+        if (Tag.ITEMS_AXES.isTagged(mat)) {
+            return "Axe";
+        }
+        if (mat == Material.MACE) {
+            return "Mace";
+        }
+        if (Tag.ITEMS_PICKAXES.isTagged(mat)) {
+            return "Mace";
+        }
+        return "null";
+    }
+
+    public static AbilityUtil getAbilityFromName(String name) {
+        name = name.toLowerCase();
+        for (var v : AbilityUtil.values()) {
+            if (v.name().equalsIgnoreCase(name))
+                return v;
+        }
+        return null;
+    }
+
 }

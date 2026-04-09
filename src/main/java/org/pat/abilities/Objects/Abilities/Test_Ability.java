@@ -2,9 +2,8 @@ package org.pat.abilities.Objects.Abilities;
 
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
+import org.pat.abilities.Objects.AbilityUtil;
 import org.pat.abilities.Objects.InterfaceActions;
-import org.pat.abilities.Utils;
 
 public interface Test_Ability extends InterfaceActions {
 
@@ -24,47 +23,56 @@ public interface Test_Ability extends InterfaceActions {
      */
 
     @Override
-    default void runPrimaryCharge(Player p) {
+    default void runPrimaryCharge(Player p, AbilityUtil ability) {
         p.sendMessage("test primary charging..");
         p.playSound(p, Sound.BLOCK_NOTE_BLOCK_DIDGERIDOO, 1, 1);
     }
 
     @Override
-    default void runSecondaryCharge(Player p) {
+    default void runSecondaryCharge(Player p, AbilityUtil ability) {
         p.sendMessage("test secondary charging..");
         p.playSound(p, Sound.BLOCK_NOTE_BLOCK_DIDGERIDOO, 1, 1);
     }
 
     @Override
-    default void cancelPrimaryCharge(Player p) {
+    default void cancelPrimaryCharge(Player p, AbilityUtil ability) {
         p.sendMessage("test primary charged cancelled");
     }
 
     @Override
-    default void cancelSecondaryCharge(Player p) {
+    default void cancelSecondaryCharge(Player p, AbilityUtil ability) {
         p.sendMessage("test secondary charged cancelled");
     }
 
     @Override
-    default void runPrimary(Player p) {
+    default void runPrimary(Player p, AbilityUtil ability) {
         p.sendMessage("test primary activated!");
     }
 
     @Override
-    default void runSecondary(Player p) {
+    default void runSecondary(Player p, AbilityUtil ability) {
         p.sendMessage("test secondary activated!");
     }
 
     @Override
-    default boolean tickShiftPassive(Player p) {
+    default boolean tickShiftPassive(Player p, AbilityUtil ability) {
         p.sendMessage("test shift passive ticked!");
         return true;
     }
 
     @Override
-    default boolean tickPassive(Player p) {
+    default boolean tickPassive(Player p, AbilityUtil ability) {
         p.sendMessage("test passive ticked!");
         return true;
     }
 
+    @Override
+    default void selectAbility(Player p, AbilityUtil ability) {
+        p.sendMessage("selected ability test!");
+    }
+
+    @Override
+    default void unselectAbility(Player p, AbilityUtil ability) {
+        p.sendMessage("unselected ability test!");
+    }
 }

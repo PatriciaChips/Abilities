@@ -12,7 +12,7 @@ import org.bukkit.craftbukkit.v1_21_R7.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.pat.abilities.Objects.AbilityUtil;
-import org.pat.abilities.Utils;
+import org.pat.abilities.TilsU;
 
 import java.lang.reflect.Field;
 
@@ -67,7 +67,7 @@ public class FoodCancelInjector {
                                 ServerboundPlayerActionPacket.Action action = packet.getAction();
                                 switch (action) {
                                     case RELEASE_USE_ITEM:
-                                        AbilityUtil ability = Utils.getSelectedAbility(p);
+                                        AbilityUtil ability = TilsU.getSelectedAbility(p);
                                         ItemStack item = p.getInventory().getItemInMainHand();
                                         if (ability != null) {
                                             if (AbilityLogic.isEating.containsKey(p.getUniqueId())) {

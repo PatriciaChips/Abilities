@@ -24,6 +24,8 @@ public class Join implements Listener {
 
         FoodCancelInjector.inject(p);
 
+        Abilities.abilityBanned.add(p.getUniqueId());
+
     }
 
 }

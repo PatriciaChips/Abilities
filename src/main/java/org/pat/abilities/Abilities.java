@@ -11,16 +11,22 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.pat.abilities.Commands.Ability;
 import org.pat.abilities.Commands.Abug;
 import org.pat.abilities.Listeners.AbilityLogic;
+import org.pat.abilities.Listeners.ClickInv;
 import org.pat.abilities.Listeners.FoodCancelInjector;
 import org.pat.abilities.Listeners.Join;
 import org.pat.abilities.Objects.AbilityUtil;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 public final class Abilities extends JavaPlugin {
 
     public static HashMap<UUID, Pair<AbilityUtil, String>> selectedAbility = new HashMap<>();
+
+    // So I have a way to stop players from selecting an ability from the GUI
+    public static Set<UUID> abilityBanned = new HashSet<>();
 
     @Override
     public void onEnable() {
@@ -29,7 +35,6 @@ public final class Abilities extends JavaPlugin {
 
         /** Injector function for detecting when a player cancels their ability charge */
         for (Player p : Bukkit.getOnlinePlayers()) {
-            AbilityUtil.selectAbility(p, AbilityUtil.test);
             FoodCancelInjector.inject(p);
         }
 
@@ -44,11 +49,12 @@ public final class Abilities extends JavaPlugin {
 
         /** Commands */
         getCommand("abug").setExecutor(new Abug());
-        getCommand("ability").setExecutor(new Abug());
+        getCommand("ability").setExecutor(new Ability());
 
         /** Listeners */
         getServer().getPluginManager().registerEvents(new AbilityLogic(), this);
         getServer().getPluginManager().registerEvents(new Join(), this);
+        getServer().getPluginManager().registerEvents(new ClickInv(), this);
 
     }
 
