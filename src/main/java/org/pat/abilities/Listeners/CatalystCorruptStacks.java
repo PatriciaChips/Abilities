@@ -2,12 +2,15 @@ package org.pat.abilities.Listeners;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Particle;
+import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitTask;
@@ -26,7 +29,6 @@ public class CatalystCorruptStacks implements Listener {
     public void applyCorruptStack (EntityDamageByEntityEvent e) {
         if (e.getDamager() instanceof Player p) {
             if (TilsU.getSelectedAbility(p).equals(AbilityUtil.catalyst)) {
-                p.sendMessage("apply stack works");
                 if (AbilityUtil.getSelectedAbility(p).isPrimaryMaterial(p.getInventory().getItemInMainHand()) && e.getEntity() instanceof Player damaged) {
                     if (e.getDamage() > 8) {
                         if (corruptionStacks.get(damaged) == null) {
@@ -48,12 +50,26 @@ public class CatalystCorruptStacks implements Listener {
     public void popCorruptStack (EntityDamageByEntityEvent e) {
         if (e.getDamager() instanceof Player p) {
             if (TilsU.getSelectedAbility(p).equals(AbilityUtil.catalyst)) {
-                p.sendMessage("destroy stack works");
                 if (AbilityUtil.getSelectedAbility(p).isSecondaryMaterial(p.getInventory().getItemInMainHand()) && e.getEntity() instanceof Player damaged) {
-                    p.sendMessage("netherite axe");
-                    if (e.getDamage() > 10 && corruptionStacks.get(damaged) != null) {
-                        p.sendMessage("damage > 10");
+                    if (e.getDamage() > 10 && corruptionStacks.get(damaged) != null && e.getFinalDamage() > 0) {
                         corruptionStacks.remove(damaged);
+                        Damageable bootsMeta = (Damageable) damaged.getEquipment().getBoots().getItemMeta();
+                        bootsMeta.setDamage(bootsMeta.getDamage()+5);
+                        damaged.getEquipment().getBoots().setItemMeta(bootsMeta);
+
+                        Damageable leggingsMeta = (Damageable) damaged.getEquipment().getLeggings().getItemMeta();
+                        leggingsMeta.setDamage(leggingsMeta.getDamage()+5);
+                        damaged.getEquipment().getLeggings().setItemMeta(leggingsMeta);
+
+                        Damageable chestplateMeta = (Damageable) damaged.getEquipment().getChestplate().getItemMeta();
+                        chestplateMeta.setDamage(chestplateMeta.getDamage()+5);
+                        damaged.getEquipment().getChestplate().setItemMeta(chestplateMeta);
+
+                        Damageable helmetMeta = (Damageable) damaged.getEquipment().getHelmet().getItemMeta();
+                        helmetMeta.setDamage(helmetMeta.getDamage()+5);
+                        damaged.getEquipment().getHelmet().setItemMeta(helmetMeta);
+                        damaged.getWorld().spawnParticle(Particle.BLOCK_CRUMBLE,damaged.getLocation().add(0,0.5,0),20,0.5,0.5,0.5,Material.SCULK.createBlockData());
+                        damaged.getWorld().playSound(damaged.getLocation(), Sound.ENTITY_ITEM_BREAK,1,0.6f);
                         damaged.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 2, 20));
                         Catalyst.spread(getHighestBlockBelow((int) damaged.getLocation().y(),damaged.getLocation()).getLocation(),0,0,10,1,0);
                     }
