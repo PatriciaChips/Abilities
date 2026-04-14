@@ -39,10 +39,10 @@ public interface Bloodweaver extends InterfaceActions {
     float primarySpeed = 2F;
     float primaryStepDistance = 0.2F;
     float primaryRange = 40;
-    float primaryBloodRequirement = 0.175F; //0.15
+    float primaryBloodRequirement = 0.2F; //0.15
     float primaryDamage = 1F;
-    float bleedDamageIterator = 0.075F;
-    Long bleedDuration = 4000L; // Ms
+    float bleedDamageIterator = 0.05F;
+    Long bleedDuration = 3000L; // Ms
     int steps = Math.max(1, (int) Math.ceil(primarySpeed / primaryStepDistance));
     float kunaiSize = 0.3F;
     float kunaiOffset = 0.35F;
@@ -61,9 +61,9 @@ public interface Bloodweaver extends InterfaceActions {
      * Shift-passive
      */
     int lifedrain_radius = 8;
-    float addedBloodPerEntity = 0.8F;
+    float addedBloodPerEntity = 0.65F;
     float exponentialIncreaseInBlood = 0.7F;
-    float healFactor = 0.15F;
+    float healFactor = 0.1F;
 
     /**
      * Passive
@@ -72,7 +72,7 @@ public interface Bloodweaver extends InterfaceActions {
 
     @Override
     default void runPrimaryCharge(Player p, AbilityUtil ability) {
-        p.playSound(p, Sound.ENTITY_EVOKER_FANGS_ATTACK, 0.05F, 1);
+        p.getWorld().playSound(p, Sound.ENTITY_EVOKER_FANGS_ATTACK, 0.05F, 1);
     }
 
     @Override

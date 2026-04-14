@@ -86,7 +86,7 @@ public class AbilityLogic implements Listener {
                                     }
 
                                 } else {
-                                    p.sendMessage(TilsU.createMsg(Utils.red + "Primary on cooldown! &7" + df.format((double) (AbilityLogic.secondaryCooldown.get(uuid) - System.currentTimeMillis()) / 1000) + "s"));
+                                    p.sendMessage(TilsU.createMsg(Utils.red + "Primary on cooldown! &7" + df.format((double) (AbilityLogic.primaryCooldown.get(uuid) - System.currentTimeMillis()) / 1000) + "s"));
                                     item.unsetData(DataComponentTypes.CONSUMABLE);
                                 }
                             } else if (ability.isSecondaryMaterial(item)) {
