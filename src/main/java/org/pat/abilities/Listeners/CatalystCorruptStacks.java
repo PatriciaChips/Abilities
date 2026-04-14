@@ -50,6 +50,7 @@ public class CatalystCorruptStacks implements Listener {
     @EventHandler
     public void popCorruptStack (EntityDamageByEntityEvent e) {
         if (e.getDamager() instanceof Player p) {
+            if (TilsU.getSelectedAbility(p) == null) return;
             if (TilsU.getSelectedAbility(p).equals(AbilityUtil.catalyst)) {
                 if (AbilityUtil.getSelectedAbility(p).isSecondaryMaterial(p.getInventory().getItemInMainHand()) && e.getEntity() instanceof Player damaged) {
                     if (e.getDamage() > 10 && corruptionStacks.get(damaged) != null && e.getFinalDamage() > 0) {

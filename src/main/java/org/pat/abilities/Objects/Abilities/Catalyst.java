@@ -82,37 +82,39 @@ public interface Catalyst extends InterfaceActions {
     default void runSecondaryCharge(Player p, AbilityUtil ability) {
         secondaryChargedTime.put(p,System.currentTimeMillis());
         CatalystCorruptStacks.numBlocksAbsorbed.put(p,0);
+        p.getWorld().playSound(p.getLocation(),Sound.ENTITY_WARDEN_SONIC_CHARGE,1,1);
         if (getHighestBlockBelow((int) p.getLocation().y(), p.getEyeLocation()).getLocation().getBlock().getType().equals(Material.SCULK)) {
-            p.getWorld().playSound(p.getLocation(),Sound.ENTITY_WARDEN_AGITATED,1,1);
+            p.sendMessage("supercharge");
             connectedSculkBlocks.put(p,new ArrayList<>());
             getConnectedSculkBlocksToLocation(p,getHighestBlockBelow((int) p.getEyeLocation().y(), p.getLocation()).getLocation());
-
             CatalystCorruptStacks.secondaryChargeRunnable.put(p,new BukkitRunnable() {
-                int tick = connectedSculkBlocks.get(p).size();
+                int tick = connectedSculkBlocks.get(p).size()-1;
                 int initialSize = connectedSculkBlocks.get(p).size();
                 @Override
                 public void run() {
                     if (!connectedSculkBlocks.get(p).isEmpty()) {
-                        tick--;
-                        Block block = connectedSculkBlocks.get(p).get(tick);
-                        connectedSculkBlocks.get(p).remove(block);
-                        playSculkSpreadEffects(block, false,false);
-                        CatalystCorruptStacks.numBlocksAbsorbed.put(p, CatalystCorruptStacks.numBlocksAbsorbed.get(p) + 1);
+                        p.sendMessage("supercharge2" );
+                        int blocksPerTick = (initialSize/30)+1;
+                        for (int i = 0; i < blocksPerTick; i++) {
+                            if (connectedSculkBlocks.get(p).size()-(tick-i) >= 0) {
+                                Block block = connectedSculkBlocks.get(p).get(tick - i);
+                                connectedSculkBlocks.get(p).remove(block);
+                                playSculkSpreadEffects(block, false, false);
+                                numBlocksAbsorbed.put(p, numBlocksAbsorbed.get(p) + 1);
 
-                        p.addPotionEffect(new PotionEffect(PotionEffectType.HASTE, 20 * CatalystCorruptStacks.numBlocksAbsorbed.get(p), 1), true);
-                        p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 20 * CatalystCorruptStacks.numBlocksAbsorbed.get(p), 2), true);
+                                p.addPotionEffect(new PotionEffect(PotionEffectType.HASTE, 20 * numBlocksAbsorbed.get(p), 1), true);
+                                p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 20 * numBlocksAbsorbed.get(p), 2), true);
+                            }
+                        }
+                        tick -= blocksPerTick;
                     }
                 }
             }.runTaskTimer(TilsU.plugin, 0, 1));
-        } else {
-            p.getWorld().playSound(p.getLocation(),Sound.ENTITY_WARDEN_SONIC_CHARGE,1,1);
         }
-        p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS,999999,5,false,false,false));
     }
 
     @Override
     default void cancelPrimaryCharge(Player p, AbilityUtil ability) {
-        SoundStop.named(Key.key("minecraft:block.sculk_catalyst.bloom"));
         if (primaryChargeRunnable.get(p) != null) {
             primaryChargeRunnable.get(p).cancel();
         }
@@ -120,69 +122,55 @@ public interface Catalyst extends InterfaceActions {
 
     @Override
     default void cancelSecondaryCharge(Player p, AbilityUtil ability) {
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                p.removePotionEffect(PotionEffectType.SLOWNESS);
-            }
-        }.runTask(TilsU.plugin);
-
-        Long chargedTime = Math.min(1500,System.currentTimeMillis()-secondaryChargedTime.get(p));
-        float chargeMultiplier = (float) chargedTime /1500;
+        Long chargedTime = Math.min(1500, System.currentTimeMillis() - secondaryChargedTime.get(p));
+        float chargeMultiplier = (float) chargedTime / 1500;
         int numBlocksAbsorbed = CatalystCorruptStacks.numBlocksAbsorbed.get(p);
-        if (numBlocksAbsorbed > 0) {
-            new BukkitRunnable() {
-                @Override
-                public void run() {
-
-                    p.getWorld().playSound(p.getLocation(), Sound.ENTITY_WARDEN_SONIC_CHARGE, 1F, (float) (1));
-                }
-            }.runTask(TilsU.plugin);
-        }
-
         if (secondaryChargeRunnable.get(p) != null) {
-        secondaryChargeRunnable.get(p).cancel();
+            secondaryChargeRunnable.get(p).cancel();
         }
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                Location startLocation = p.getEyeLocation();
-                startLocation = startLocation.add(p.getEyeLocation().getDirection().normalize().multiply(2));
-                Location finalStartLocation = startLocation;
+new BukkitRunnable() {
+    @Override
+    public void run() {
+        Location startLocation = p.getEyeLocation();
+        startLocation = startLocation.add(p.getEyeLocation().getDirection().normalize().multiply(2));
+        Location finalStartLocation = startLocation;
 
-                float range = (20*chargeMultiplier)+numBlocksAbsorbed;
-                float damage = (6*chargeMultiplier)+ (float) numBlocksAbsorbed /4;
-                if (!p.isSneaking()) {
-                    p.setVelocity(p.getVelocity().subtract(p.getEyeLocation().getDirection().normalize().multiply(1)));
-                }
-                p.getWorld().playSound(p.getLocation(), Sound.ENTITY_WARDEN_SONIC_BOOM, 1, 1);
-                Location sonicBoomLocation = finalStartLocation;
-                while (sonicBoomLocation.distance(p.getEyeLocation()) < range) {
+        float range = (20 * chargeMultiplier) + numBlocksAbsorbed;
+        float damage = (6 * chargeMultiplier) + (float) numBlocksAbsorbed / 4;
+        if (!p.isSneaking()) {
+            p.setVelocity(p.getVelocity().subtract(p.getEyeLocation().getDirection().normalize().multiply(1)));
+        }
+        p.getWorld().playSound(p.getLocation(), Sound.ENTITY_WARDEN_SONIC_BOOM, 1, 1);
+        Location sonicBoomLocation = finalStartLocation;
+        while (sonicBoomLocation.distance(p.getEyeLocation()) < range) {
 
-                    List<Entity> damagedEntities = new ArrayList<>();
-                    p.getWorld().spawnParticle(Particle.SONIC_BOOM, sonicBoomLocation, 1);
-                    if (!sonicBoomLocation.getNearbyEntities(1, 1, 1).isEmpty()) {
-                        for (Entity damageableEntity : sonicBoomLocation.getNearbyEntities(1, 1, 1)) {
-                            if (damagedEntities.contains(damageableEntity)) continue;
-                            if (damageableEntity.equals(p)) continue;
-                            if (damageableEntity instanceof LivingEntity livingEntity) {
-                                livingEntity.damage(damage, DamageSource.builder(DamageType.SONIC_BOOM).build());
-                                livingEntity.setVelocity(livingEntity.getVelocity().add(sonicBoomLocation.getDirection()).normalize().multiply(1.2 + (0.02)*numBlocksAbsorbed));
-                                damagedEntities.add(livingEntity);
-                            }
-                        }
+            List<Entity> damagedEntities = new ArrayList<>();
+            p.getWorld().spawnParticle(Particle.SONIC_BOOM, sonicBoomLocation, 1);
+            if (!sonicBoomLocation.getNearbyEntities(1, 1, 1).isEmpty()) {
+                for (Entity damageableEntity : sonicBoomLocation.getNearbyEntities(1, 1, 1)) {
+                    if (damagedEntities.contains(damageableEntity)) continue;
+                    if (damageableEntity.equals(p)) continue;
+                    if (damageableEntity instanceof LivingEntity livingEntity) {
+                        livingEntity.damage(damage, DamageSource.builder(DamageType.SONIC_BOOM).build());
+                        livingEntity.setVelocity(livingEntity.getVelocity().add(sonicBoomLocation.getDirection()).normalize().multiply(1.2 + (0.02) * numBlocksAbsorbed));
+                        damagedEntities.add(livingEntity);
                     }
-
-                    sonicBoomLocation = sonicBoomLocation.add(p.getEyeLocation().getDirection().normalize().multiply(2+ (0.02)*numBlocksAbsorbed));
                 }
-                CatalystCorruptStacks.numBlocksAbsorbed.put(p,0);
-                if (connectedSculkBlocks.get(p) != null) {
-                    connectedSculkBlocks.get(p).clear();
-                }
-
-                TilsU.setSecondaryCooldown(p,2000L);
             }
-        }.runTaskLater(TilsU.plugin, numBlocksAbsorbed > 0 ? 35 : 10);
+
+            sonicBoomLocation = sonicBoomLocation.add(p.getEyeLocation().getDirection().normalize().multiply(2 + (0.02) * numBlocksAbsorbed));
+        }
+        CatalystCorruptStacks.numBlocksAbsorbed.put(p, 0);
+        if (connectedSculkBlocks.get(p) != null) {
+            connectedSculkBlocks.get(p).clear();
+        }
+
+        TilsU.setSecondaryCooldown(p, AbilityUtil.catalyst.getSecondaryCooldown());
+
+    }
+}.runTask(TilsU.plugin);
+
+
     }
 
     @Override
@@ -262,8 +250,50 @@ public interface Catalyst extends InterfaceActions {
 
     @Override
     default void runSecondary(Player p, AbilityUtil ability) {
-
+        float chargeMultiplier = 1.2f;
+        int numBlocksAbsorbed = CatalystCorruptStacks.numBlocksAbsorbed.get(p);
+        if (secondaryChargeRunnable.get(p) != null) {
+            secondaryChargeRunnable.get(p).cancel();
         }
+
+        Location startLocation = p.getEyeLocation();
+        startLocation = startLocation.add(p.getEyeLocation().getDirection().normalize().multiply(2));
+        Location finalStartLocation = startLocation;
+
+        float range = (20 * chargeMultiplier) + numBlocksAbsorbed;
+        float damage = (6 * chargeMultiplier) + (float) numBlocksAbsorbed / 4;
+        if (!p.isSneaking()) {
+            p.setVelocity(p.getVelocity().subtract(p.getEyeLocation().getDirection().normalize().multiply(1)));
+        }
+        p.getWorld().playSound(p.getLocation(), Sound.ENTITY_WARDEN_SONIC_BOOM, 1, 1);
+        Location sonicBoomLocation = finalStartLocation;
+        while (sonicBoomLocation.distance(p.getEyeLocation()) < range) {
+
+            List<Entity> damagedEntities = new ArrayList<>();
+            p.getWorld().spawnParticle(Particle.SONIC_BOOM, sonicBoomLocation, 1);
+            if (!sonicBoomLocation.getNearbyEntities(1, 1, 1).isEmpty()) {
+                for (Entity damageableEntity : sonicBoomLocation.getNearbyEntities(1, 1, 1)) {
+                    if (damagedEntities.contains(damageableEntity)) continue;
+                    if (damageableEntity.equals(p)) continue;
+                    if (damageableEntity instanceof LivingEntity livingEntity) {
+                        livingEntity.damage(damage, DamageSource.builder(DamageType.SONIC_BOOM).build());
+                        livingEntity.setVelocity(livingEntity.getVelocity().add(sonicBoomLocation.getDirection()).normalize().multiply(1.2 + (0.02) * numBlocksAbsorbed));
+                        damagedEntities.add(livingEntity);
+                    }
+                }
+            }
+
+            sonicBoomLocation = sonicBoomLocation.add(p.getEyeLocation().getDirection().normalize().multiply(2 + (0.02) * numBlocksAbsorbed));
+        }
+        CatalystCorruptStacks.numBlocksAbsorbed.put(p, 0);
+        if (connectedSculkBlocks.get(p) != null) {
+            connectedSculkBlocks.get(p).clear();
+        }
+
+        TilsU.setSecondaryCooldown(p, AbilityUtil.catalyst.getSecondaryCooldown());
+
+
+    }
 
     @Override
     default boolean tickShiftPassive(Player p, AbilityUtil ability) {
@@ -372,9 +402,7 @@ public interface Catalyst extends InterfaceActions {
             block.setType(Material.SCULK);
         } else {
             if (oldMaterialType.get(block) != null) {
-                if (!block.getType().equals(Material.SCULK)) {
-                    block.setType(oldMaterialType.get(block));
-                }
+                block.setType(oldMaterialType.get(block));
             } else {
                 block.setType(Material.AIR);
             }
