@@ -70,7 +70,7 @@ public enum AbilityUtil {
                     builder.add(InterfaceActions.class, new Catalyst() {
                     });
             }),
-    bloodweaver(Material.REDSTONE, 0, 0, 20, 1, Tag.ITEMS_SWORDS, Tag.ITEMS_AXES, new Affinity[]{Affinity.combat, Affinity.movement}, ItemUseAnimation.BRUSH, ItemUseAnimation.BLOCK, 6, 2, null, null, null, null,
+    bloodweaver(Material.REDSTONE, 0, 0, 30, 1, Tag.ITEMS_SWORDS, Tag.ITEMS_AXES, new Affinity[]{Affinity.combat, Affinity.movement}, ItemUseAnimation.BRUSH, ItemUseAnimation.BLOCK, 6, 2, null, null, null, null,
             "Vital Kunai",
             "Hemoflow",
             "Life-drain",
