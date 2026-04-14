@@ -12,6 +12,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.pat.abilities.Abilities;
 import org.pat.abilities.Objects.AbilityUtil;
+import org.pat.abilities.Objects.Affinity;
+import org.pat.pattyEssentialsV3.ColoredText;
 import org.pat.pattyEssentialsV3.Listeners.ClickInv;
 import org.pat.pattyEssentialsV3.Utils;
 
@@ -42,29 +44,55 @@ public class Ability implements TabExecutor {
     }
 
     public static void openAbilitySelectionGUI(Player p) {
-        String title = "Select an Ability..";
+        String title = ColoredText.t(Utils.guiyellow + "Select an Ability..");
         ClickInv.guiInvs.add(title);
-        Inventory inv = Bukkit.createInventory(p, 18, title);
+        Inventory inv = Bukkit.createInventory(p, 27, title);
 
-        for (int i = 0; i <= 8; i++) {
+        for (int i = inv.getSize()-9; i <= inv.getSize()-1; i++) {
             inv.setItem(i, Utils.i.createItemstack(" ", Material.GRAY_STAINED_GLASS_PANE, 1));
         }
 
-        int i = 9;
+        int i = 0;
         for (var ability : AbilityUtil.values()) {
             if (ability != AbilityUtil.test) {
                 List<String> lore = new ArrayList<>();
-                lore.add(AbilityUtil.MaterialToTangibleLoreFormat(ability.getPrimaryMaterial()) + ": " + ability.getPrimaryName());
-                lore.add(ability.getPrimaryDescription());
-                lore.add(AbilityUtil.MaterialToTangibleLoreFormat(ability.getSecondaryMaterial()) + ": " + ability.getSecondaryName());
-                lore.add(ability.getSecondaryDescription());
-                lore.add("Shift: " + ability.getShiftPassiveName());
-                lore.add(ability.getShiftPassiveDescription());
-                lore.add("Passive: " + ability.getPassiveName());
-                lore.add(ability.getPassiveName());
+                lore.add("&f" + AbilityUtil.MaterialToTangibleLoreFormat(ability.getPrimaryMaterial()) + "&7 » &e" + ability.getPrimaryName());
+                String primDesc = ability.getPrimaryDescription();
+                for (String line : primDesc.split("\n")) {
+                    lore.add("&7" + line);
+                }
+
+                lore.add("&f" + AbilityUtil.MaterialToTangibleLoreFormat(ability.getSecondaryMaterial()) + "&7 » &e" + ability.getSecondaryName());
+                String secDesc = ability.getSecondaryDescription();
+                for (String line : secDesc.split("\n")) {
+                    lore.add("&7" + line);
+                }
+
+                lore.add("&fShift&7 » &e" + ability.getShiftPassiveName());
+                String shiftPasDesc = ability.getShiftPassiveDescription();
+                for (String line : shiftPasDesc.split("\n")) {
+                    lore.add("&7" + line);
+                }
+
+                lore.add("&fShift&7 » &e" + ability.getPassiveName());
+                String pasDesc = ability.getPassiveDescription();
+                for (String line : pasDesc.split("\n")) {
+                    lore.add("&7" + line);
+                }
+
                 lore.add(" ");
-                lore.add("Click to select!");
-                inv.setItem(i, Utils.i.createItemstack(Utils.formatMsg(ability.name()), ability.getGuiItem(), 1, lore));
+                String affinityStr = "";
+                for (var v : ability.getAffinities()) {
+                    if (affinityStr.equalsIgnoreCase("")) {
+                        affinityStr = v.getText();
+                    } else {
+                        affinityStr = affinityStr + "&7, " + v.getText();
+                    }
+                }
+                lore.add("&fAffinities&7 » " + affinityStr);
+                lore.add(" ");
+                lore.add(Utils.gold + "&nClick to select!");
+                inv.setItem(i, Utils.i.createItemstack(Utils.formatMsg(Utils.red + ability.name()), ability.getGuiItem(), 1, lore));
                 i++;
             }
         }

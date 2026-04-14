@@ -6,6 +6,8 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.pat.abilities.Listeners.AbilityLogic;
 import org.pat.abilities.Objects.AbilityUtil;
+import org.pat.pattyEssentialsV3.ColoredText;
+import org.pat.pattyEssentialsV3.Utils;
 
 import java.security.SecureRandom;
 import java.util.Arrays;
@@ -17,6 +19,12 @@ public class TilsU {
 
     public static Plugin plugin = Abilities.getPlugin(Abilities.class);
     public static BukkitScheduler scheduler = plugin.getServer().getScheduler();
+
+    public static String tag = ColoredText.t("&7[" + Utils.blue + "\uD83D\uDDFC\uD83D\uDDFC  \uD83D\uDEE9&7] &f");
+
+    public static String createMsg(String msg) {
+        return ColoredText.t(tag + msg);
+    }
 
     public static AbilityUtil getSelectedAbility(Player p) {
         if (Abilities.selectedAbility.containsKey(p.getUniqueId()))

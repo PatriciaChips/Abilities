@@ -12,6 +12,8 @@ import org.bukkit.inventory.ItemStack;
 import org.pat.abilities.Abilities;
 import org.pat.abilities.Commands.Ability;
 import org.pat.abilities.Objects.AbilityUtil;
+import org.pat.abilities.TilsU;
+import org.pat.pattyEssentialsV3.ColoredText;
 import org.pat.pattyEssentialsV3.Utils;
 
 import java.util.UUID;
@@ -46,10 +48,9 @@ public class ClickInv implements Listener {
                                     AbilityUtil ability = AbilityUtil.getAbilityFromName(itemName);
                                     if (ability != null) {
                                         p.closeInventory();
-                                        p.sendMessage(ability.name());
                                         AbilityUtil.selectAbility(p, ability);
                                         Abilities.abilityBanned.add(uuid);
-                                        p.sendMessage("selected ability: " + ability.name() + "!");
+                                        p.sendMessage(TilsU.createMsg(Utils.lightblue + "You've selected: &e&n" + ability.name() + Utils.lightblue + "!"));
                                     }
                                     break;
                             }

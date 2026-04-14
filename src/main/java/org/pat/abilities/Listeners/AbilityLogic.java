@@ -20,9 +20,12 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.pat.abilities.Abilities;
 import org.pat.abilities.Objects.AbilityUtil;
 import org.pat.abilities.TilsU;
+import org.pat.pattyEssentialsV3.Utils;
 
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 
 public class AbilityLogic implements Listener {
@@ -85,7 +88,7 @@ public class AbilityLogic implements Listener {
                                     }
 
                                 } else {
-                                    p.sendMessage("primary cooldown -> " + df.format((double) (AbilityLogic.primaryCooldown.get(uuid) - System.currentTimeMillis()) / 1000) + "s");
+                                    p.sendMessage(TilsU.createMsg(Utils.red + "Primary on cooldown! &7" + df.format((double) (AbilityLogic.secondaryCooldown.get(uuid) - System.currentTimeMillis()) / 1000) + "s"));
                                     item.unsetData(DataComponentTypes.CONSUMABLE);
                                 }
                             } else if (ability.isSecondaryMaterial(item)) {
@@ -116,7 +119,7 @@ public class AbilityLogic implements Listener {
                                     }
 
                                 } else {
-                                    p.sendMessage("secondary cooldown -> " + df.format((double) (AbilityLogic.secondaryCooldown.get(uuid) - System.currentTimeMillis()) / 1000) + "s");
+                                    p.sendMessage(TilsU.createMsg(Utils.red + "Secondary on cooldown! &7" + df.format((double) (AbilityLogic.secondaryCooldown.get(uuid) - System.currentTimeMillis()) / 1000) + "s"));
                                     item.unsetData(DataComponentTypes.CONSUMABLE);
                                 }
                             }
@@ -315,6 +318,7 @@ public class AbilityLogic implements Listener {
                 if (isAbilityItem) {
                     if (Tag.ITEMS_AXES.isTagged(material)) {
                         item.setType(AbilityUtil.axeVanity);
+                        ItemMeta im = item.getItemMeta();
 
                         ItemStack axe = new ItemStack(material);
                         if (axe.hasData(DataComponentTypes.MAX_DAMAGE))
@@ -327,9 +331,8 @@ public class AbilityLogic implements Listener {
                             item.setData(DataComponentTypes.CUSTOM_NAME, axe.getData(DataComponentTypes.CUSTOM_NAME));
                         if (axe.hasData(DataComponentTypes.ITEM_NAME))
                             item.setData(DataComponentTypes.ITEM_NAME, axe.getData(DataComponentTypes.ITEM_NAME));
-                        if ((ability.isPrimaryMaterial(item) && !ability.hasPrimaryItemModel()) || (ability.isSecondaryMaterial(item) && !ability.hasSecondaryItemModel())) {
-                            if (axe.hasData(DataComponentTypes.ITEM_MODEL))
-                                item.setData(DataComponentTypes.ITEM_MODEL, axe.getData(DataComponentTypes.ITEM_MODEL));
+                        if ((ability.isPrimaryMaterial(material) && !ability.hasPrimaryItemModel()) || (ability.isSecondaryMaterial(material) && !ability.hasSecondaryItemModel())) {
+                            im.setItemModel(new NamespacedKey("minecraft", material.name().toLowerCase()));
                         } else {
                             applyItemModelData(ability, items, p);
                         }
@@ -361,7 +364,6 @@ public class AbilityLogic implements Listener {
                             item.setData(DataComponentTypes.SWING_ANIMATION, axe.getData(DataComponentTypes.SWING_ANIMATION));
                         if (axe.hasData(DataComponentTypes.STORED_ENCHANTMENTS))
                             item.setData(DataComponentTypes.STORED_ENCHANTMENTS, axe.getData(DataComponentTypes.STORED_ENCHANTMENTS));
-                        ItemMeta im = item.getItemMeta();
                         im.getPersistentDataContainer().set(new NamespacedKey(TilsU.plugin, "material"), PersistentDataType.STRING, material.name());
                         item.setItemMeta(im);
                     }
@@ -371,11 +373,18 @@ public class AbilityLogic implements Listener {
     }
 
     public static void setPrimaryItemData(ItemStack item, AbilityUtil ability) {
-        item.setData(DataComponentTypes.CONSUMABLE, Consumable.consumable().animation(ability.getPrimaryAnimation()).hasConsumeParticles(false).sound(Key.key("12345", "e")).consumeSeconds((float) ability.getPrimaryChargeDuration() / 20F).build());
+        if (ability.hasPrimaryAnimation()) {
+            item.setData(DataComponentTypes.CONSUMABLE, Consumable.consumable().animation(ability.getPrimaryAnimation()).hasConsumeParticles(false).sound(Key.key("12345", "e")).consumeSeconds((float) ability.getPrimaryChargeDuration() / 20F).build());
+        }
+        ItemMeta im = item.getItemMeta();
+        List<String> lore = new ArrayList<>();
+
     }
 
     public static void setSecondaryItemData(ItemStack item, AbilityUtil ability) {
-        item.setData(DataComponentTypes.CONSUMABLE, Consumable.consumable().animation(ability.getSecondaryAnimation()).hasConsumeParticles(false).sound(Key.key("12345", "e")).consumeSeconds((float) ability.getSecondaryChargeDuration() / 20F).build());
+        if (ability.hasSecondaryAnimation()) {
+            item.setData(DataComponentTypes.CONSUMABLE, Consumable.consumable().animation(ability.getSecondaryAnimation()).hasConsumeParticles(false).sound(Key.key("12345", "e")).consumeSeconds((float) ability.getSecondaryChargeDuration() / 20F).build());
+        }
     }
 
     public static void applyItemModelData(AbilityUtil ability, ItemStack[] items, Player p) {

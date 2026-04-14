@@ -42,7 +42,7 @@ public enum AbilityUtil {
      * A null chargedItemModel will return the itemModel (which uses vanilla if both are null)
      */
 
-    test(Material.REDSTONE, 5, 5, 20, 0, Tag.ITEMS_AXES, Tag.ITEMS_SWORDS, new Affinity[]{Affinity.movement}, ItemUseAnimation.BRUSH, ItemUseAnimation.TRIDENT, 20, 0, null, "bucket", "bucket", "bucket_c",
+    test(Material.REDSTONE, 5, 5, 20, 0, Tag.ITEMS_AXES, Tag.ITEMS_SWORDS, new Affinity[]{Affinity.movement}, ItemUseAnimation.BRUSH, ItemUseAnimation.TRIDENT, 20, 0, null, null, null, null,
             "",
             "",
             "",
@@ -70,15 +70,15 @@ public enum AbilityUtil {
                     builder.add(InterfaceActions.class, new Catalyst() {
                     });
             }),
-    bloodweaver(Material.REDSTONE, 1, 2, 20, 1, Tag.ITEMS_SWORDS, Tag.ITEMS_AXES, new Affinity[]{Affinity.movement}, ItemUseAnimation.BRUSH, ItemUseAnimation.TRIDENT, 10, 0, null, null, null, null,
+    bloodweaver(Material.REDSTONE, 0, 0, 20, 1, Tag.ITEMS_SWORDS, Tag.ITEMS_AXES, new Affinity[]{Affinity.combat, Affinity.movement}, ItemUseAnimation.BRUSH, ItemUseAnimation.BLOCK, 6, 2, null, null, null, null,
             "Vital Kunai",
-            "Blood Rush",
+            "Hemoflow",
             "Life-drain",
             "Blood Reservoir",
-            "Shoot a selection of blood soaked kunai that steals hp from hit players.",
-            "Use a portion of your hp to launch forward.",
-            "Shifting near players will steal their blood, which is stored and can be used via; Vital Kunai.",
-            "Stored blood is displayed in the xp bar, the more blood stored the more effective Life-drain becomes.",
+            "Shoot a selection of blood soaked kunai that steals hp from hit players and applies &nbleed&7. \n&8&nBleed&8 stacks and deals dmg over-time but will completely clear after 3 seconds unless applied again.",
+            "Dash in the direction of your current horizontal velocity while on ground. \n&8While in-air conjure a platform of blood below you, only you can use.",
+            "Shifting near players will steal their blood, which heals and is stored to be used for abilities.",
+            "Stored blood is displayed in the xp bar, the more blood stored the more effective Life-drain becomes. \n&8Blood is self-generated at an extremely slow rate.",
             builder -> {
                 builder.add(InterfaceActions.class, new Bloodweaver() {
                 });
@@ -539,16 +539,16 @@ public enum AbilityUtil {
 
     public static String MaterialToTangibleLoreFormat(Material mat) {
         if (Tag.ITEMS_SWORDS.isTagged(mat)) {
-            return "Sword";
+            return "Sword \uD83D\uDDE1";
         }
         if (Tag.ITEMS_AXES.isTagged(mat)) {
-            return "Axe";
+            return "Axe \uD83E\uDE93";
         }
         if (mat == Material.MACE) {
-            return "Mace";
+            return "Mace \uD83E\uDE93";
         }
         if (Tag.ITEMS_PICKAXES.isTagged(mat)) {
-            return "Mace";
+            return "Pickaxe ⛏";
         }
         return "null";
     }
