@@ -176,7 +176,9 @@ public interface Catalyst extends InterfaceActions {
                     sonicBoomLocation = sonicBoomLocation.add(p.getEyeLocation().getDirection().normalize().multiply(2+ (0.02)*numBlocksAbsorbed));
                 }
                 CatalystCorruptStacks.numBlocksAbsorbed.put(p,0);
-                connectedSculkBlocks.get(p).clear();
+                if (connectedSculkBlocks.get(p) != null) {
+                    connectedSculkBlocks.get(p).clear();
+                }
 
                 TilsU.setSecondaryCooldown(p,2000L);
             }
