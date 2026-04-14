@@ -55,7 +55,7 @@ public enum AbilityUtil {
                 builder.add(InterfaceActions.class, new Test_Ability() {
                 });
             }),
-        catalyst(Material.ECHO_SHARD, 1, 1, 0, 2, Tag.ITEMS_SWORDS, Tag.ITEMS_AXES, new Affinity[]{Affinity.movement}, ItemUseAnimation.BLOCK, ItemUseAnimation.BLOCK, 40, 999999, null, null, null, null,
+        catalyst(Material.ECHO_SHARD, 30, 20, 0, 2, Tag.ITEMS_SWORDS, Tag.ITEMS_AXES, new Affinity[]{Affinity.movement}, ItemUseAnimation.BLOCK, ItemUseAnimation.BLOCK, 10, 999999, null, null, null, null,
             "Place beacon / Sonic boom",
             "Absorb",
             "Burrow",
