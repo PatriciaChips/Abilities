@@ -324,7 +324,7 @@ public interface Bloodweaver extends InterfaceActions {
     }
 
     static Material getRanSword() {
-        return Tag.ITEMS_SWORDS.getValues().stream().toList().get(new Random().nextInt(Tag.ITEMS_SWORDS.getValues().stream().toList().size()-1));
+        return Tag.ITEMS_SWORDS.getValues().stream().toList().get(new Random().nextInt(Tag.ITEMS_SWORDS.getValues().stream().toList().size() - 1));
     }
 
     static void primaryHitEntityLogic(Player p, LivingEntity entity) {
@@ -348,7 +348,11 @@ public interface Bloodweaver extends InterfaceActions {
 
         for (LivingEntity entity : p.getLocation().getNearbyLivingEntities(maxDistance)) {
 
-            if (entity == p) continue;
+            if (entity == p)
+                continue;
+
+            if (entity instanceof Player player && player.getGameMode() != GameMode.SURVIVAL)
+                continue;
 
             // Vector from player to entity
             Vector toEntity = entity.getLocation().add(0, entity.getHeight() * 0.5, 0)
@@ -498,18 +502,18 @@ public interface Bloodweaver extends InterfaceActions {
                 p.setVelocity(fallVec);
 
                 /**
-                for (int x = -1; x <= 1; x++) {
-                    for (int z = -1; z <= 1; z++) {
-                        Location loc = base.clone().add(x, 0, z);
-                        if (!loc.getBlock().isSolid()) {
-                            p.sendBlockChange(loc, Material.BEDROCK.createBlockData());
-                            Utils.scheduler.runTaskLater(Utils.plugin, () -> {
-                                p.sendBlockChange(loc, loc.getBlock().getBlockData());
-                            }, 20);
-                        }
-                    }
-                }
-                */
+                 for (int x = -1; x <= 1; x++) {
+                 for (int z = -1; z <= 1; z++) {
+                 Location loc = base.clone().add(x, 0, z);
+                 if (!loc.getBlock().isSolid()) {
+                 p.sendBlockChange(loc, Material.BEDROCK.createBlockData());
+                 Utils.scheduler.runTaskLater(Utils.plugin, () -> {
+                 p.sendBlockChange(loc, loc.getBlock().getBlockData());
+                 }, 20);
+                 }
+                 }
+                 }
+                 */
             } else {
                 p.sendMessage(notEnoughBlood);
                 p.playSound(p, Sound.ITEM_SHIELD_BREAK, 0.1F, 1.2F);
@@ -657,6 +661,8 @@ public interface Bloodweaver extends InterfaceActions {
                         if (v.getValue().left() > System.currentTimeMillis()) {
                             if (v.getKey() != null) {
                                 LivingEntity entity = v.getKey();
+                                if (entity instanceof Player player && player.getGameMode() != GameMode.SURVIVAL)
+                                    continue;
                                 healPlayer(entity, -getEntityBleedDamage(p, entity), 6F, -1F);
                                 DecimalFormat df = new DecimalFormat("0.00");
                                 Random ran = new Random();

@@ -5,6 +5,7 @@ import io.papermc.paper.datacomponent.item.Consumable;
 import it.unimi.dsi.fastutil.Pair;
 import net.kyori.adventure.key.Key;
 import org.bukkit.*;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -23,10 +24,7 @@ import org.pat.abilities.TilsU;
 import org.pat.pattyEssentialsV3.Utils;
 
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class AbilityLogic implements Listener {
 
@@ -318,7 +316,8 @@ public class AbilityLogic implements Listener {
                 if (isAbilityItem) {
                     if (Tag.ITEMS_AXES.isTagged(material)) {
                         item.setType(AbilityUtil.axeVanity);
-                        ItemMeta im = item.getItemMeta();
+
+                        Map<Enchantment, Integer> enchants = item.getEnchantments();
 
                         ItemStack axe = new ItemStack(material);
                         if (axe.hasData(DataComponentTypes.MAX_DAMAGE))
@@ -331,11 +330,6 @@ public class AbilityLogic implements Listener {
                             item.setData(DataComponentTypes.CUSTOM_NAME, axe.getData(DataComponentTypes.CUSTOM_NAME));
                         if (axe.hasData(DataComponentTypes.ITEM_NAME))
                             item.setData(DataComponentTypes.ITEM_NAME, axe.getData(DataComponentTypes.ITEM_NAME));
-                        if ((ability.isPrimaryMaterial(material) && !ability.hasPrimaryItemModel()) || (ability.isSecondaryMaterial(material) && !ability.hasSecondaryItemModel())) {
-                            im.setItemModel(new NamespacedKey("minecraft", material.name().toLowerCase()));
-                        } else {
-                            applyItemModelData(ability, items, p);
-                        }
                         if (axe.hasData(DataComponentTypes.LORE))
                             item.setData(DataComponentTypes.LORE, axe.getData(DataComponentTypes.LORE));
                         if (axe.hasData(DataComponentTypes.RARITY))
@@ -362,10 +356,27 @@ public class AbilityLogic implements Listener {
                             item.setData(DataComponentTypes.REPAIRABLE, axe.getData(DataComponentTypes.REPAIRABLE));
                         if (axe.hasData(DataComponentTypes.SWING_ANIMATION))
                             item.setData(DataComponentTypes.SWING_ANIMATION, axe.getData(DataComponentTypes.SWING_ANIMATION));
+                        /**
                         if (axe.hasData(DataComponentTypes.STORED_ENCHANTMENTS))
                             item.setData(DataComponentTypes.STORED_ENCHANTMENTS, axe.getData(DataComponentTypes.STORED_ENCHANTMENTS));
+                         */
+
+                        ItemMeta im = item.getItemMeta();
+
                         im.getPersistentDataContainer().set(new NamespacedKey(TilsU.plugin, "material"), PersistentDataType.STRING, material.name());
+
+                        if ((ability.isPrimaryMaterial(material) && !ability.hasPrimaryItemModel()) || (ability.isSecondaryMaterial(material) && !ability.hasSecondaryItemModel())) {
+                            im.setItemModel(new NamespacedKey("minecraft", material.name().toLowerCase()));
+                        } else {
+                            applyItemModelData(ability, items, p);
+                        }
+
+                        for (var v : enchants.entrySet()) {
+                            im.addEnchant(v.getKey(), v.getValue(), true);
+                        }
+
                         item.setItemMeta(im);
+
                     }
                 }
             }
