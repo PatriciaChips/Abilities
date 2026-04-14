@@ -28,6 +28,7 @@ public class CatalystCorruptStacks implements Listener {
     @EventHandler
     public void applyCorruptStack (EntityDamageByEntityEvent e) {
         if (e.getDamager() instanceof Player p) {
+            if (TilsU.getSelectedAbility(p) == null) return;
             if (TilsU.getSelectedAbility(p).equals(AbilityUtil.catalyst)) {
                 if (AbilityUtil.getSelectedAbility(p).isPrimaryMaterial(p.getInventory().getItemInMainHand()) && e.getEntity() instanceof Player damaged) {
                     if (e.getDamage() > 8) {
