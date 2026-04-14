@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import org.pat.abilities.Abilities;
 import org.pat.abilities.Listeners.AbilityLogic;
 import org.pat.abilities.Objects.Abilities.Bloodweaver;
+import org.pat.abilities.Objects.Abilities.Catalyst;
 import org.pat.abilities.Objects.Abilities.Test_Ability;
 import org.pat.abilities.TilsU;
 
@@ -54,7 +55,21 @@ public enum AbilityUtil {
                 builder.add(InterfaceActions.class, new Test_Ability() {
                 });
             }),
-
+        catalyst(Material.ECHO_SHARD, 1, 1, 0, 2, Tag.ITEMS_SWORDS, Tag.ITEMS_AXES, new Affinity[]{Affinity.movement}, ItemUseAnimation.BLOCK, ItemUseAnimation.BLOCK, 40, 999999, null, null, null, null,
+            "Place beacon / Sonic boom",
+            "Absorb",
+            "Burrow",
+            "Sculk",
+            "Whilst looking at a sculk block, send a charge into the ground where you’re looking, and grow a sculk shrieker at its location (or the closest valid block)\n" +
+                    "Otherwise, Fire a sonic boom in the direction you are looking. If you are standing on sculk, charge builds up around your feet and the sonic boom deals reverse knockback\n" +
+            "",
+            "connected sculk under where you’re standing turns into a charge and runs along the ground to your location, and is then absorbed.\n For every block of sculk that you absorb, gain 1 second of speed 3 and haste 2.",
+            "If a sculk shrieker is within a 9 block radius, burrow into the ground and reappear next to the shrieker.\n If the shrieker is destroyed during the burrow, you are instantly transported to it and popped/killed.\n Shriekers within range are affected with glowing.",
+                "Standing on sculk gives resistance 1 and regeneration 1",
+                builder -> {
+                    builder.add(InterfaceActions.class, new Catalyst() {
+                    });
+            }),
     bloodweaver(Material.REDSTONE, 1, 2, 20, 1, Tag.ITEMS_SWORDS, Tag.ITEMS_AXES, new Affinity[]{Affinity.movement}, ItemUseAnimation.BRUSH, ItemUseAnimation.TRIDENT, 10, 0, null, null, null, null,
             "Vital Kunai",
             "Blood Rush",
@@ -67,6 +82,7 @@ public enum AbilityUtil {
             builder -> {
                 builder.add(InterfaceActions.class, new Bloodweaver() {
                 });
+
             });
 
     private Material guiItem;
@@ -306,6 +322,8 @@ public enum AbilityUtil {
             return (Material) tag.getValues().stream().toList().get(0);
         return null;
     }
+
+
 
     public Material getSecondaryMaterial() {
         if (secondaryMaterialIdentifier instanceof Material material)

@@ -5,15 +5,17 @@ import it.unimi.dsi.fastutil.Pair;
 import net.minecraft.network.Connection;
 import net.minecraft.server.level.ServerPlayer;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.v1_21_R7.entity.CraftPlayer;
+import org.bukkit.entity.BlockDisplay;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.pat.abilities.Commands.Ability;
 import org.pat.abilities.Commands.Abug;
-import org.pat.abilities.Listeners.AbilityLogic;
-import org.pat.abilities.Listeners.ClickInv;
-import org.pat.abilities.Listeners.FoodCancelInjector;
-import org.pat.abilities.Listeners.Join;
+import org.pat.abilities.Listeners.*;
+import org.pat.abilities.Objects.Abilities.Catalyst;
 import org.pat.abilities.Objects.AbilityUtil;
 
 import java.util.HashMap;
@@ -27,6 +29,8 @@ public final class Abilities extends JavaPlugin {
 
     // So I have a way to stop players from selecting an ability from the GUI
     public static Set<UUID> abilityBanned = new HashSet<>();
+
+
 
     @Override
     public void onEnable() {
@@ -55,11 +59,17 @@ public final class Abilities extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new AbilityLogic(), this);
         getServer().getPluginManager().registerEvents(new Join(), this);
         getServer().getPluginManager().registerEvents(new ClickInv(), this);
+        getServer().getPluginManager().registerEvents(new CatalystCorruptStacks(), this);
 
     }
 
     @Override
     public void onDisable() {
+
+        for (Block shriekers : Catalyst.shriekers.keySet()) {
+            shriekers.setType(Material.AIR);
+            Catalyst.shriekers.get(shriekers).remove();
+        }
 
         for (Player p : Bukkit.getOnlinePlayers()) {
             try {
